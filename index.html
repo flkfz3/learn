@@ -127,6 +127,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
   </header>
   <nav id="tabs">
     <button data-v="today" class="on">今日</button>
+    <button data-v="courses">课程</button>
     <button data-v="kb">知识库</button>
     <button data-v="terms">术语</button>
     <button data-v="read">阅读</button>
@@ -144,7 +145,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-08-21b';
+const BUILD='2026-08-21c';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -229,9 +230,10 @@ document.getElementById('tabs').addEventListener('click',e=>{
 });
 function render(){
   const v=document.getElementById('view');
-  v.innerHTML=({today:rToday,kb:rKB,terms:rTerms,read:rRead,qa:rQA})[cur]();
+  v.innerHTML=({today:rToday,courses:rCourses,kb:rKB,terms:rTerms,read:rRead,qa:rQA})[cur]();
   mathify(v);
 }
+const ORIGIN_ZH={qe:'QE 复习卡点',course:'课程',paper:'论文',telegram:'随手记',window:'窗口问答',manual:'手动'};
 
 /* ---------- 今日 ---------- */
 function dayOf(ts){ if(!ts)return''; return new Intl.DateTimeFormat('en-CA',{timeZone:TZ}).format(new Date(ts)); }
@@ -255,14 +257,14 @@ function rToday(){
   const lec=D.lec.filter(l=>l.lecture_date===d);
   const sl=D.sl.filter(s=>s.study_on===d);
   const qa=D.qa.filter(q=>dayOf(q.asked_at)===d);
-  const kpNew=D.kp.filter(k=>dayOf(k.updated_at)===d&&k.status!=='stub');
+  const kpNew=D.kp.filter(k=>(dayOf(k.updated_at)===d||dayOf(k.last_reviewed_at)===d)&&k.status!=='stub');
   const stubs=D.kp.filter(k=>k.status==='stub');
   const rq=D.rq.filter(r=>r.status==='reading').concat(D.rq.filter(r=>r.status==='queued'&&r.priority===1)).slice(0,6);
   let h=`<div class="toolrow"><input type="date" value="${d}" onchange="selDate=this.value;render()">
     <button class="btn mini ghost" onclick="selDate=todayStr();render()">今天</button></div>`;
   h+=`<div class="card"><h2>课程 <span class="n">${d}</span></h2>`;
   h+=lec.length?lec.map(l=>`<div style="margin-bottom:10px">
-      <b>${esc(COURSES[l.course_code]||l.course_code)}</b> <span class="muted">${esc(l.title||'')}</span>
+      <b style="cursor:pointer" onclick="openLecture('${l.id}')">${esc(COURSES[l.course_code]||l.course_code)} →</b> <span class="muted">${esc(l.title||'')}</span>
       <div class="md">${md(l.summary_md)}</div><div>${srcBtns(l)}</div>${kpChips(l)}</div>`).join('')
     :`<div class="empty">这天没有课程记录</div>`;
   h+=`</div>`;
@@ -271,7 +273,7 @@ function rToday(){
       <div class="m">${esc(s.category||s.source||'')}${s.link?` · <a target="_blank" href="${esc(s.link)}">链接↗</a>`:''}</div></div>`).join('')
     :`<div class="empty">还没记 —— 用 ＋ 或发 Telegram</div>`;
   h+=`</div>`;
-  if(kpNew.length){h+=`<div class="card"><h2>新写的知识点</h2>`+
+  if(kpNew.length){h+=`<div class="card"><h2>今天涉及的知识点 <span class="n">新写/更新/你回顾过的</span></h2>`+
     kpNew.map(k=>rowKP(k)).join('')+`</div>`;}
   if(qa.length){h+=`<div class="card"><h2>问答</h2>`+qa.map(q=>rowQA(q)).join('')+`</div>`;}
   h+=`<div class="card"><h2>待学 <span class="n">stub ${stubs.length} · 在读/优先 ${rq.length}</span></h2>`;
@@ -282,15 +284,37 @@ function rToday(){
   return h;
 }
 
+/* ---------- 课程(一节课一个整体) ---------- */
+function rCourses(){
+  let h='';
+  for(const code of Object.keys(COURSES)){
+    const lecs=D.lec.filter(l=>l.course_code===code);
+    h+=`<div class="card"><h2>${esc(COURSES[code])} <span class="n">${code} · ${lecs.length} 节</span></h2>`+
+      (lecs.map(l=>`<div class="row" onclick="openLecture('${l.id}')">
+        <div class="t"><b>${l.lecture_date}</b> ${esc(l.title||'')}</div>
+        <div class="m">${(l.key_points||[]).length} 个知识点${l.notes_pdf_url?' · 有笔记 PDF':''}${l.transcript_url?' · 有转录':''}</div>
+      </div>`).join('')||'<div class="empty">还没有记录</div>')+`</div>`;
+  }
+  return h;
+}
+function openLecture(id){
+  const l=D.lec.find(x=>x.id===id);if(!l)return;
+  openOv(`<h3>${esc(COURSES[l.course_code]||l.course_code)} · ${l.lecture_date}</h3>
+    <div class="muted">${esc(l.title||'')}</div>
+    <div style="margin:6px 0">${srcBtns(l)}</div>
+    <div class="md kp-body">${md(l.summary_md)||'<p class="empty">暂无讲义</p>'}</div>
+    ${kpChips(l)}`);
+}
+
 /* ---------- 知识库 ---------- */
-let kbQ='',kbTopic='',kbSt='';
+let kbQ='',kbTopic='',kbSt='',kbView='list';
 function rowKP(k){
   return `<div class="row" onclick="openKP('${k.id}')">
     <div class="t"><b>${esc(k.title_zh||k.title_en)}</b>
       <span class="muted">${esc(k.title_zh?k.title_en:'')}</span>
       <span class="chip k-${k.kind}">${KINDZH[k.kind]||k.kind}</span>
       <span class="chip st-${k.status}">${STZH[k.status]}</span></div>
-    <div class="m">${esc(k.topic||'')}</div></div>`;
+    <div class="m">${ORIGIN_ZH[k.origin]||esc(k.origin||'')}${k.topic?' · '+esc(k.topic):''}${k.review_count?' · 回顾'+k.review_count+'次':''}</div></div>`;
 }
 function rKB(){
   const topics=[...new Set(D.kp.filter(k=>k.kind!=='term').map(k=>k.topic).filter(Boolean))].sort();
@@ -299,6 +323,7 @@ function rKB(){
   if(kbSt)list=list.filter(k=>k.status===kbSt);
   if(kbQ){const q=kbQ.toLowerCase();list=list.filter(k=>
     (k.title_en+' '+(k.title_zh||'')+' '+(k.body_md||'')).toLowerCase().includes(q));}
+  const seg=`<div class="seg"><button class="${kbView==='list'?'on':''}" onclick="kbView='list';render()">列表</button><button class="${kbView==='map'?'on':''}" onclick="kbView='map';render()">导图</button></div>`;
   return `<div class="toolrow">
       <input type="search" placeholder="搜标题/正文…" value="${esc(kbQ)}" oninput="kbQ=this.value;render()">
       <select style="width:auto" onchange="kbTopic=this.value;render()">
@@ -307,17 +332,81 @@ function rKB(){
         <option value="">全部状态</option>
         <option value="done" ${kbSt==='done'?'selected':''}>成稿</option>
         <option value="draft" ${kbSt==='draft'?'selected':''}>草稿</option>
-        <option value="stub" ${kbSt==='stub'?'selected':''}>待写</option></select></div>
-    <div class="card">${list.map(rowKP).join('')||'<div class="empty">空</div>'}</div>`;
+        <option value="stub" ${kbSt==='stub'?'selected':''}>待写</option></select>
+      ${seg}</div>
+    <div class="card">${kbView==='map'?rMap(list):list.map(rowKP).join('')||'<div class="empty">空</div>'}</div>`;
+}
+function rMap(list){
+  // 主题思维导图:无主题筛选时画主题总览,选了主题画该主题的条目图;边 = 正文 [[slug]] 引用
+  if(!kbTopic){
+    const groups={};
+    list.forEach(k=>{const t=k.topic||'未分类';(groups[t]=groups[t]||[]).push(k);});
+    const names=Object.keys(groups).sort();
+    return svgRadial('统计知识库',names.map(t=>({label:t+' ('+groups[t].length+')',
+      onclick:`kbTopic='${t}';render()`})),[]);
+  }
+  if(!list.length)return'<div class="empty">空</div>';
+  const idx={};list.forEach((k,i)=>idx[k.slug]=i);
+  const edges=[];
+  list.forEach((a,i)=>{const m=(a.body_md||'').match(/\[\[([a-z0-9-]+)\]\]/g)||[];
+    m.forEach(x=>{const s=x.slice(2,-2);if(s in idx&&idx[s]!==i)edges.push([i,idx[s]]);});});
+  return svgRadial(kbTopic,list.map(k=>({label:(k.title_zh||k.title_en).slice(0,10),
+    onclick:`openKP('${k.id}')`,dim:k.status==='stub'})),edges);
+}
+function svgRadial(center,nodes,edges){
+  const N=nodes.length;if(!N)return'<div class="empty">空</div>';
+  const R=Math.max(120,N*22),cx=R+110,cy=R+40,W=2*cx,H=2*cy-20;
+  const pos=nodes.map((_,i)=>{const a=i*2*Math.PI/N-Math.PI/2;
+    return [cx+R*Math.cos(a),cy+R*Math.sin(a),a];});
+  let s=`<div style="overflow:auto"><svg viewBox="0 0 ${W} ${H}" style="min-width:${Math.min(W,720)}px;width:100%">`;
+  s+=pos.map(p=>`<line x1="${cx}" y1="${cy}" x2="${p[0]}" y2="${p[1]}" stroke="var(--line)" stroke-width="1"/>`).join('');
+  s+=edges.map(([i,j])=>`<line x1="${pos[i][0]}" y1="${pos[i][1]}" x2="${pos[j][0]}" y2="${pos[j][1]}" stroke="var(--accent)" stroke-width="1.3" opacity="0.55"/>`).join('');
+  s+=`<circle cx="${cx}" cy="${cy}" r="34" fill="var(--accent)"/><text x="${cx}" y="${cy+4}" text-anchor="middle" fill="#fff" font-size="12">${esc(center).slice(0,12)}</text>`;
+  s+=nodes.map((n,i)=>{const [x,y,a]=pos[i];const right=Math.cos(a)>=0;
+    return `<g style="cursor:pointer" onclick="${n.onclick}">
+      <circle cx="${x}" cy="${y}" r="7" fill="${n.dim?'var(--faint)':'var(--accent)'}"/>
+      <text x="${x+(right?11:-11)}" y="${y+4}" text-anchor="${right?'start':'end'}" fill="var(--ink)" font-size="12.5">${esc(n.label)}</text></g>`;}).join('');
+  return s+`</svg></div><div class="muted" style="margin-top:6px">紫线 = 条目间引用;点节点打开${kbTopic?';<a href="javascript:void(0)" onclick="kbTopic=\'\';render()">← 回主题总览</a>':''}</div>`;
+}
+function srcOne(s){
+  if(s.meeting_id)return `<a class="srcbtn" href="javascript:void(0)" onclick="openMeetingNote('${esc(s.meeting_id)}')">${esc(s.label)} →</a>`;
+  if(!s.url)return `<span class="srcbtn" style="cursor:default">${esc(s.label)}${s.locator?' · '+esc(s.locator):''}</span>`;
+  return `<a class="srcbtn" target="_blank" href="${esc(s.url)}">${esc(s.label)}${s.locator?' · '+esc(s.locator):''} ↗</a>`;
+}
+async function openMeetingNote(mid){
+  const {data}=await sb.from('meeting_notes').select('*').eq('meeting_id',mid).limit(1);
+  const n=(data||[])[0];
+  openOv(`<h3>${esc(n?n.title||'组会记录':'组会记录')}</h3>
+    <div class="md kp-body">${n?md(n.zh||n.content):'<p class="empty">没找到这条组会记录。</p>'}</div>`);
 }
 function openKP(id){
   const k=D.kp.find(x=>x.id===id);if(!k)return;
-  const srcs=(k.sources||[]).map(s=>`<a class="srcbtn" target="_blank" href="${esc(s.url)}">${esc(s.label)}${s.locator?' · '+esc(s.locator):''} ↗</a>`).join('');
+  const srcs=(k.sources||[]).map(srcOne).join('');
+  const qas=D.qa.filter(q=>(q.kp_slugs||[]).includes(k.slug));
+  const backs=D.kp.filter(o=>o.id!==k.id&&(o.body_md||'').includes('[['+k.slug+']]'));
+  const rev=k.review_count?`回顾 ${k.review_count} 次 · 上次 ${dayOf(k.last_reviewed_at)}`:'还没回顾过';
   openOv(`<h3>${esc(k.title_zh||k.title_en)}</h3>
     <div class="muted">${esc(k.title_en)} · <span class="chip k-${k.kind}">${KINDZH[k.kind]}</span>
       <span class="chip st-${k.status}">${STZH[k.status]}</span> · ${esc(k.topic||'')}</div>
-    <div>${srcs}</div>
-    <div class="md kp-body">${k.body_md?md(k.body_md):'<p class="empty">还没写 —— 已排入我的写作队列。</p>'}</div>`);
+    <div style="background:var(--well);border-radius:9px;padding:7px 10px;margin:8px 0;font-size:13px">
+      <b>来源</b>:${ORIGIN_ZH[k.origin]||esc(k.origin||'')}<br>${srcs||'<span class="muted">(待补)</span>'}</div>
+    <div class="md kp-body">${k.body_md?md(k.body_md):'<p class="empty">还没写 —— 已排入我的写作队列。</p>'}</div>
+    ${qas.length?`<div style="margin-top:12px"><b style="font-size:13.5px">你的问题与反思</b>`+
+      qas.map(q=>`<div class="row" onclick="openQA('${q.id}')"><div class="t">${esc(q.question)}</div>
+        <div class="m">${dayOf(q.asked_at)} · ${esc(q.window_name||'')}</div></div>`).join('')+`</div>`:''}
+    ${backs.length?`<div style="margin-top:10px" class="muted">被引用于:`+
+      backs.map(o=>`<a class="srcbtn" href="javascript:void(0)" onclick="closeOv();openKP('${o.id}')">${esc(o.title_zh||o.title_en)}</a>`).join('')+`</div>`:''}
+    <div style="margin-top:14px;display:flex;align-items:center;gap:10px">
+      <button class="btn" onclick="markReviewed('${k.id}')">✓ 我看过了</button>
+      <span class="muted">${rev}</span></div>`);
+}
+async function markReviewed(id){
+  const k=D.kp.find(x=>x.id===id);
+  const r1=await sb.from('kp_reviews').insert({kp_id:id});
+  const r2=await sb.from('knowledge_points').update({last_reviewed_at:new Date().toISOString(),
+    review_count:(k.review_count||0)+1}).eq('id',id);
+  if(r1.error||r2.error)return toast('失败: '+(r1.error||r2.error).message);
+  toast('已记录这次回顾');closeOv();loadAll();
 }
 
 /* ---------- 术语 ---------- */
