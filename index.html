@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>learn · 学习台</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<style>
+:root{
+  --accent:#6d5dfc; --accent-2:#5a4ae0; --accent-soft:#eceafe;
+  --ink:#26244d; --muted:#5c5a80; --faint:#8886a8; --line:#e4e2f2;
+  --card:#ffffff; --field:#ffffff; --well:#f2f0fb; --page:#f7f6fd;
+  --glow:radial-gradient(40rem 30rem at 8% 0%,rgba(150,135,255,.20),transparent 60%),
+         radial-gradient(38rem 30rem at 95% 12%,rgba(109,93,252,.12),transparent 60%);
+  --ok:#0a7f5a; --warn:#b45309; --danger:#c62828;
+  --chip-term:#0369a1; --chip-concept:#6d5dfc; --chip-theorem:#0a7f5a;
+  --chip-trap:#c62828; --chip-method:#b45309;
+  --sh:0 8px 26px rgba(38,36,77,.08); --r:14px;
+}
+html[data-theme=dark]{
+  --accent:#8f83ff; --accent-2:#a89eff; --accent-soft:rgba(143,131,255,.18);
+  --ink:#e8e6f7; --muted:#b3b0d0; --faint:#8a87ad; --line:#33315a;
+  --card:#1d1b38; --field:#171530; --well:#252245; --page:#12102a;
+  --glow:radial-gradient(40rem 34rem at 10% 10%,rgba(90,74,224,.30),transparent 60%),
+         radial-gradient(38rem 32rem at 90% 90%,rgba(56,40,180,.25),transparent 62%);
+  --ok:#34d399; --warn:#fbbf24; --danger:#f87171;
+  --chip-term:#7dd3fc; --chip-concept:#a89eff; --chip-theorem:#34d399;
+  --chip-trap:#f87171; --chip-method:#fbbf24;
+  --sh:0 10px 30px rgba(0,0,10,.45);
+}
+*{box-sizing:border-box;margin:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",Helvetica,Arial,sans-serif;
+  background:var(--page);background-image:var(--glow);background-attachment:fixed;
+  color:var(--ink);min-height:100vh;line-height:1.65;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+.wrap{max-width:880px;margin:0 auto;padding:14px 14px 90px}
+header{display:flex;align-items:center;gap:10px;padding:10px 2px}
+header h1{font-size:20px;letter-spacing:.5px}
+header .build{font-size:11px;color:var(--faint)}
+header .sp{flex:1}
+.iconbtn{border:1px solid var(--line);background:var(--card);color:var(--muted);
+  border-radius:10px;padding:5px 10px;cursor:pointer;font-size:13px}
+nav{display:flex;gap:4px;border-bottom:1.5px solid var(--line);margin:4px 0 16px;overflow-x:auto}
+nav button{border:0;background:none;color:var(--muted);font-size:15px;padding:9px 13px;
+  cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap}
+nav button.on{color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  box-shadow:var(--sh);padding:14px 16px;margin-bottom:12px}
+.card h2{font-size:15px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.card h2 .n{font-size:12px;color:var(--faint);font-weight:400}
+.chip{display:inline-block;font-size:11px;padding:1px 8px;border-radius:99px;
+  border:1px solid currentColor;vertical-align:1px}
+.k-term{color:var(--chip-term)}.k-concept{color:var(--chip-concept)}
+.k-theorem{color:var(--chip-theorem)}.k-trap{color:var(--chip-trap)}.k-method{color:var(--chip-method)}
+.st-stub{color:var(--warn)}.st-draft{color:var(--chip-term)}.st-done{color:var(--ok)}
+.srcbtn{display:inline-block;font-size:12px;color:var(--accent);border:1px solid var(--line);
+  background:var(--well);border-radius:8px;padding:2px 9px;margin:2px 4px 2px 0;text-decoration:none}
+.row{padding:9px 2px;border-bottom:1px solid var(--line);cursor:pointer}
+.row:last-child{border-bottom:0}
+.row .t{font-size:14.5px}
+.row .m{font-size:12px;color:var(--faint)}
+.md{font-size:14.5px}
+.md p{margin:.5em 0}.md ul,.md ol{padding-left:1.4em;margin:.5em 0}
+.md h1,.md h2,.md h3{font-size:1.05em;margin:.8em 0 .3em}
+.md code{background:var(--well);padding:1px 5px;border-radius:5px;font-size:.92em}
+.md pre{background:var(--well);padding:10px;border-radius:9px;overflow-x:auto}
+.md pre code{background:none;padding:0}
+.md blockquote{border-left:3px solid var(--accent);padding-left:10px;color:var(--muted);margin:.5em 0}
+.md table{border-collapse:collapse;display:block;overflow-x:auto}
+.md td,.md th{border:1px solid var(--line);padding:3px 9px;font-size:13.5px}
+.muted{color:var(--muted);font-size:13px}
+.empty{color:var(--faint);font-size:13px;padding:8px 0}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--field);
+  border:1px solid var(--line);border-radius:9px;padding:7px 10px;width:100%}
+textarea{min-height:80px;resize:vertical}
+label{font-size:12.5px;color:var(--muted);display:block;margin:9px 0 3px}
+.btn{border:0;background:var(--accent);color:#fff;font:inherit;font-size:14px;
+  border-radius:10px;padding:8px 18px;cursor:pointer}
+.btn.ghost{background:var(--well);color:var(--ink);border:1px solid var(--line)}
+.btn.mini{font-size:12px;padding:3px 10px;border-radius:8px}
+.fab{position:fixed;right:22px;bottom:22px;width:52px;height:52px;border-radius:50%;
+  background:var(--accent);color:#fff;font-size:26px;border:0;cursor:pointer;
+  box-shadow:0 8px 22px rgba(109,93,252,.45)}
+.overlay{position:fixed;inset:0;background:rgba(10,8,30,.45);display:none;
+  align-items:flex-start;justify-content:center;padding:4vh 12px;z-index:50;overflow-y:auto}
+.overlay.on{display:flex}
+.sheet{background:var(--card);border-radius:16px;max-width:760px;width:100%;
+  padding:20px 22px;box-shadow:var(--sh);margin-bottom:6vh}
+.sheet h3{font-size:17px;margin-bottom:4px}
+.toolrow{display:flex;gap:8px;align-items:center;margin:10px 0;flex-wrap:wrap}
+.toolrow input[type=date]{width:auto}
+.toolrow input[type=search]{flex:1;min-width:140px}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:var(--card);color:var(--muted);padding:6px 12px;font-size:13px;cursor:pointer}
+.seg button.on{background:var(--accent);color:#fff}
+.stars{color:var(--warn);letter-spacing:1px}
+.login{max-width:360px;margin:16vh auto;text-align:center}
+.login .card{padding:26px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:86px;background:var(--ink);
+  color:var(--page);padding:8px 18px;border-radius:99px;font-size:13.5px;opacity:0;
+  transition:opacity .25s;pointer-events:none;z-index:99}
+.toast.on{opacity:1}
+.kp-body{margin-top:8px}
+details.kps{margin-top:6px}
+details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
+.kpitem{padding:7px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+.kpitem:last-child{border-bottom:0}
+@media (max-width:560px){.wrap{padding:8px 8px 90px}.card{padding:12px}}
+</style>
+</head>
+<body>
+<div id="login" class="login" style="display:none">
+  <div class="card">
+    <h1 style="margin-bottom:6px">learn · 学习台</h1>
+    <p class="muted" style="margin-bottom:14px">用邮箱魔法链接登录</p>
+    <input id="email" type="email" placeholder="email">
+    <button class="btn" style="margin-top:12px;width:100%" onclick="sendLink()">发送登录链接</button>
+    <p id="loginmsg" class="muted" style="margin-top:10px"></p>
+  </div>
+</div>
+
+<div id="app" class="wrap" style="display:none">
+  <header>
+    <h1>learn</h1><span class="build" id="build"></span><span class="sp"></span>
+    <button class="iconbtn" onclick="toggleTheme()">◐</button>
+    <button class="iconbtn" onclick="logout()">退出</button>
+  </header>
+  <nav id="tabs">
+    <button data-v="today" class="on">今日</button>
+    <button data-v="kb">知识库</button>
+    <button data-v="terms">术语</button>
+    <button data-v="read">阅读</button>
+    <button data-v="qa">问答</button>
+  </nav>
+  <main id="view"></main>
+</div>
+
+<button class="fab" id="fab" style="display:none" onclick="openAdd()">＋</button>
+<div class="overlay" id="ov" onclick="if(event.target===this)closeOv()"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script>
+const BUILD='2026-08-21b';
+const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
+const TZ='America/New_York';
+const COURSES={STAT8060:'Statistical Computing I',STAT8170:'Probability Theory I'};
+const KINDZH={term:'术语',concept:'概念',theorem:'定理',trap:'易错',method:'方法'};
+const STZH={stub:'待写',draft:'草稿',done:'成稿'};
+let sb=null, D={kp:[],lec:[],qa:[],rq:[],sl:[]}, cur='today', selDate=todayStr();
+
+document.getElementById('build').textContent='build '+BUILD;
+if(localStorage.getItem('learn-theme')==='dark'||
+   (!localStorage.getItem('learn-theme')&&matchMedia('(prefers-color-scheme: dark)').matches))
+  document.documentElement.setAttribute('data-theme','dark');
+function toggleTheme(){
+  const d=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',d?'light':'dark');
+  localStorage.setItem('learn-theme',d?'light':'dark');
+}
+function todayStr(){
+  return new Intl.DateTimeFormat('en-CA',{timeZone:TZ}).format(new Date());
+}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'),2200);}
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function md(s){
+  if(!s)return'';
+  s=s.replace(/\[\[([a-z0-9-]+)\]\]/g,(m,slug)=>{
+    const k=D.kp.find(x=>x.slug===slug);
+    if(!k)return m;
+    return `<a href="javascript:void(0)" onclick="openKPslug('${slug}')">${esc(k.title_zh||k.title_en)}</a>`;
+  });
+  const html=marked.parse(s,{mangle:false,headerIds:false});
+  return html;
+}
+function openKPslug(slug){
+  const k=D.kp.find(x=>x.slug===slug);
+  if(k){closeOv();openKP(k.id);}
+}
+function mathify(el){
+  if(window.renderMathInElement)renderMathInElement(el,{delimiters:[
+    {left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},
+    {left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],
+    throwOnError:false});
+}
+
+/* ---------- auth ---------- */
+sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+async function boot(){
+  const {data}=await sb.auth.getSession();
+  show(!!(data&&data.session));
+  sb.auth.onAuthStateChange((_e,s)=>show(!!s));
+}
+async function sendLink(){
+  const email=document.getElementById('email').value.trim();
+  if(!email)return;
+  const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.href.split('#')[0]}});
+  document.getElementById('loginmsg').textContent=error?('失败: '+error.message):'链接已发,去邮箱点开';
+}
+async function logout(){await sb.auth.signOut();location.reload();}
+let booted=false;
+function show(logged){
+  document.getElementById('login').style.display=logged?'none':'block';
+  document.getElementById('app').style.display=logged?'block':'none';
+  document.getElementById('fab').style.display=logged?'block':'none';
+  if(logged&&!booted){booted=true;loadAll();}
+}
+
+/* ---------- data ---------- */
+async function loadAll(){
+  const [kp,lec,qa,rq,sl]=await Promise.all([
+    sb.from('knowledge_points').select('*').order('updated_at',{ascending:false}).limit(1000),
+    sb.from('lectures').select('*').order('lecture_date',{ascending:false}).limit(400),
+    sb.from('qa_log').select('*').order('asked_at',{ascending:false}).limit(500),
+    sb.from('reading_queue').select('*').order('priority').order('created_at',{ascending:false}).limit(300),
+    sb.from('study_log').select('*').order('study_on',{ascending:false}).limit(400)]);
+  D={kp:kp.data||[],lec:lec.data||[],qa:qa.data||[],rq:rq.data||[],sl:sl.data||[]};
+  render();
+}
+document.getElementById('tabs').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  cur=b.dataset.v;render();
+});
+function render(){
+  const v=document.getElementById('view');
+  v.innerHTML=({today:rToday,kb:rKB,terms:rTerms,read:rRead,qa:rQA})[cur]();
+  mathify(v);
+}
+
+/* ---------- 今日 ---------- */
+function dayOf(ts){ if(!ts)return''; return new Intl.DateTimeFormat('en-CA',{timeZone:TZ}).format(new Date(ts)); }
+function srcBtns(o){
+  const b=[];
+  if(o.slides_url)b.push(['课件',o.slides_url]);
+  if(o.transcript_url)b.push(['转录',o.transcript_url]);
+  if(o.notes_pdf_url)b.push(['笔记 PDF',o.notes_pdf_url]);
+  return b.map(([t,u])=>`<a class="srcbtn" target="_blank" href="${esc(u)}">${t} ↗</a>`).join('');
+}
+function kpChips(l){
+  const ks=l.key_points||[];
+  if(!ks.length)return'';
+  return `<details class="kps"><summary>知识点 ${ks.length} 条</summary>`+
+    ks.map(k=>`<div class="kpitem"><b>${esc(k.title_zh||k.title_en)}</b>
+      <span class="muted">${esc(k.title_zh?k.title_en:'')}</span>
+      ${'★'.repeat(k.importance||1)}<br>${k.summary_zh||''}</div>`).join('')+`</details>`;
+}
+function rToday(){
+  const d=selDate;
+  const lec=D.lec.filter(l=>l.lecture_date===d);
+  const sl=D.sl.filter(s=>s.study_on===d);
+  const qa=D.qa.filter(q=>dayOf(q.asked_at)===d);
+  const kpNew=D.kp.filter(k=>dayOf(k.updated_at)===d&&k.status!=='stub');
+  const stubs=D.kp.filter(k=>k.status==='stub');
+  const rq=D.rq.filter(r=>r.status==='reading').concat(D.rq.filter(r=>r.status==='queued'&&r.priority===1)).slice(0,6);
+  let h=`<div class="toolrow"><input type="date" value="${d}" onchange="selDate=this.value;render()">
+    <button class="btn mini ghost" onclick="selDate=todayStr();render()">今天</button></div>`;
+  h+=`<div class="card"><h2>课程 <span class="n">${d}</span></h2>`;
+  h+=lec.length?lec.map(l=>`<div style="margin-bottom:10px">
+      <b>${esc(COURSES[l.course_code]||l.course_code)}</b> <span class="muted">${esc(l.title||'')}</span>
+      <div class="md">${md(l.summary_md)}</div><div>${srcBtns(l)}</div>${kpChips(l)}</div>`).join('')
+    :`<div class="empty">这天没有课程记录</div>`;
+  h+=`</div>`;
+  h+=`<div class="card"><h2>学到 <span class="n">study log</span></h2>`;
+  h+=sl.length?sl.map(s=>`<div class="row" style="cursor:default"><div class="t">${esc(s.takeaway)}</div>
+      <div class="m">${esc(s.category||s.source||'')}${s.link?` · <a target="_blank" href="${esc(s.link)}">链接↗</a>`:''}</div></div>`).join('')
+    :`<div class="empty">还没记 —— 用 ＋ 或发 Telegram</div>`;
+  h+=`</div>`;
+  if(kpNew.length){h+=`<div class="card"><h2>新写的知识点</h2>`+
+    kpNew.map(k=>rowKP(k)).join('')+`</div>`;}
+  if(qa.length){h+=`<div class="card"><h2>问答</h2>`+qa.map(q=>rowQA(q)).join('')+`</div>`;}
+  h+=`<div class="card"><h2>待学 <span class="n">stub ${stubs.length} · 在读/优先 ${rq.length}</span></h2>`;
+  h+=stubs.slice(0,8).map(k=>rowKP(k)).join('')||`<div class="empty">没有待写的知识点</div>`;
+  if(rq.length)h+=`<div style="margin-top:8px">`+rq.map(r=>`<div class="row" onclick="openRead('${r.id}')">
+      <div class="t">${esc(r.title)} <span class="chip">${esc(r.status==='reading'?'在读':'排队')}</span></div></div>`).join('')+`</div>`;
+  h+=`</div>`;
+  return h;
+}
+
+/* ---------- 知识库 ---------- */
+let kbQ='',kbTopic='',kbSt='';
+function rowKP(k){
+  return `<div class="row" onclick="openKP('${k.id}')">
+    <div class="t"><b>${esc(k.title_zh||k.title_en)}</b>
+      <span class="muted">${esc(k.title_zh?k.title_en:'')}</span>
+      <span class="chip k-${k.kind}">${KINDZH[k.kind]||k.kind}</span>
+      <span class="chip st-${k.status}">${STZH[k.status]}</span></div>
+    <div class="m">${esc(k.topic||'')}</div></div>`;
+}
+function rKB(){
+  const topics=[...new Set(D.kp.filter(k=>k.kind!=='term').map(k=>k.topic).filter(Boolean))].sort();
+  let list=D.kp.filter(k=>k.kind!=='term');
+  if(kbTopic)list=list.filter(k=>k.topic===kbTopic);
+  if(kbSt)list=list.filter(k=>k.status===kbSt);
+  if(kbQ){const q=kbQ.toLowerCase();list=list.filter(k=>
+    (k.title_en+' '+(k.title_zh||'')+' '+(k.body_md||'')).toLowerCase().includes(q));}
+  return `<div class="toolrow">
+      <input type="search" placeholder="搜标题/正文…" value="${esc(kbQ)}" oninput="kbQ=this.value;render()">
+      <select style="width:auto" onchange="kbTopic=this.value;render()">
+        <option value="">全部主题</option>${topics.map(t=>`<option ${t===kbTopic?'selected':''}>${esc(t)}</option>`).join('')}</select>
+      <select style="width:auto" onchange="kbSt=this.value;render()">
+        <option value="">全部状态</option>
+        <option value="done" ${kbSt==='done'?'selected':''}>成稿</option>
+        <option value="draft" ${kbSt==='draft'?'selected':''}>草稿</option>
+        <option value="stub" ${kbSt==='stub'?'selected':''}>待写</option></select></div>
+    <div class="card">${list.map(rowKP).join('')||'<div class="empty">空</div>'}</div>`;
+}
+function openKP(id){
+  const k=D.kp.find(x=>x.id===id);if(!k)return;
+  const srcs=(k.sources||[]).map(s=>`<a class="srcbtn" target="_blank" href="${esc(s.url)}">${esc(s.label)}${s.locator?' · '+esc(s.locator):''} ↗</a>`).join('');
+  openOv(`<h3>${esc(k.title_zh||k.title_en)}</h3>
+    <div class="muted">${esc(k.title_en)} · <span class="chip k-${k.kind}">${KINDZH[k.kind]}</span>
+      <span class="chip st-${k.status}">${STZH[k.status]}</span> · ${esc(k.topic||'')}</div>
+    <div>${srcs}</div>
+    <div class="md kp-body">${k.body_md?md(k.body_md):'<p class="empty">还没写 —— 已排入我的写作队列。</p>'}</div>`);
+}
+
+/* ---------- 术语 ---------- */
+let tQ='';
+function rTerms(){
+  let list=D.kp.filter(k=>k.kind==='term').sort((a,b)=>a.title_en.localeCompare(b.title_en));
+  if(tQ){const q=tQ.toLowerCase();list=list.filter(k=>
+    (k.title_en+' '+(k.title_zh||'')+' '+(k.body_md||'')).toLowerCase().includes(q));}
+  return `<div class="toolrow"><input type="search" placeholder="搜术语…" value="${esc(tQ)}" oninput="tQ=this.value;render()">
+      <span class="muted">${list.length} 条</span></div>
+    <div class="card">${list.map(k=>`<div class="row" onclick="openKP('${k.id}')">
+      <div class="t"><b>${esc(k.title_en)}</b> — ${esc(k.title_zh||'')}</div>
+      <div class="m">${esc((k.body_md||'').split('\n')[0].slice(0,90))}</div></div>`).join('')||'<div class="empty">空</div>'}</div>`;
+}
+
+/* ---------- 阅读 ---------- */
+function rRead(){
+  const grp={reading:'在读',queued:'排队',done:'读完',dropped:'放弃'};
+  let h='';
+  for(const st of Object.keys(grp)){
+    const list=D.rq.filter(r=>r.status===st);
+    if(!list.length&&(st==='dropped'))continue;
+    h+=`<div class="card"><h2>${grp[st]} <span class="n">${list.length}</span></h2>`+
+      (list.map(r=>`<div class="row" onclick="openRead('${r.id}')">
+        <div class="t">${esc(r.title)} <span class="chip">${esc(r.kind)}</span>
+          <span class="stars">${'★'.repeat(4-r.priority)}</span></div>
+        <div class="m">${esc(r.recommender||'')}${r.progress?' · '+esc(r.progress):''}</div></div>`).join('')||'<div class="empty">空</div>')+`</div>`;
+  }
+  return h;
+}
+function openRead(id){
+  const r=D.rq.find(x=>x.id===id);if(!r)return;
+  const links=[r.link&&['打开↗',r.link],r.notion_url&&['Notion↗',r.notion_url]].filter(Boolean)
+    .map(([t,u])=>`<a class="srcbtn" target="_blank" href="${esc(u)}">${t}</a>`).join('');
+  openOv(`<h3>${esc(r.title)}</h3>
+    <div class="muted">${esc(r.kind)} · ${esc(r.recommender||'')} · 优先级 ${r.priority}</div>
+    <div style="margin:6px 0">${links}</div>
+    ${r.note?`<div class="md">${md(r.note)}</div>`:''}
+    <label>进度备注</label><input id="rq-prog" value="${esc(r.progress||'')}">
+    <div class="toolrow" style="margin-top:12px">
+      ${['queued','reading','done','dropped'].map(s=>`<button class="btn mini ${r.status===s?'':'ghost'}"
+        onclick="setRead('${r.id}','${s}')">${({queued:'排队',reading:'在读',done:'读完',dropped:'放弃'})[s]}</button>`).join('')}
+    </div>`);
+}
+async function setRead(id,st){
+  const prog=document.getElementById('rq-prog')?.value||null;
+  const {error}=await sb.from('reading_queue').update({status:st,progress:prog,updated_at:new Date().toISOString()}).eq('id',id);
+  if(error)return toast('失败: '+error.message);
+  closeOv();toast('已更新');loadAll();
+}
+
+/* ---------- 问答 ---------- */
+let qQ='';
+function rowQA(q){
+  return `<div class="row" onclick="openQA('${q.id}')">
+    <div class="t">${esc(q.question)}</div>
+    <div class="m">${dayOf(q.asked_at)} · ${esc(q.window_name||'')}${q.topic?' · '+esc(q.topic):''}</div></div>`;
+}
+function rQA(){
+  let list=D.qa;
+  if(qQ){const q=qQ.toLowerCase();list=list.filter(x=>
+    (x.question+' '+(x.answer_md||'')).toLowerCase().includes(q));}
+  return `<div class="toolrow"><input type="search" placeholder="搜我问过的问题…" value="${esc(qQ)}" oninput="qQ=this.value;render()">
+      <span class="muted">${list.length} 条</span></div>
+    <div class="card">${list.map(rowQA).join('')||'<div class="empty">还没有问答记录</div>'}</div>`;
+}
+function openQA(id){
+  const q=D.qa.find(x=>x.id===id);if(!q)return;
+  const kps=(q.kp_slugs||[]).map(s=>{
+    const k=D.kp.find(k=>k.slug===s);
+    return k?`<a class="srcbtn" href="javascript:closeOv();openKP('${k.id}')">${esc(k.title_zh||k.title_en)}</a>`:'';
+  }).join('');
+  openOv(`<h3 style="font-weight:600">${esc(q.question)}</h3>
+    <div class="muted">${dayOf(q.asked_at)} · ${esc(q.window_name||'')}</div>
+    <div class="md kp-body">${q.answer_md?md(q.answer_md):'<p class="empty">答案还没归档。</p>'}</div>
+    ${kps?`<div style="margin-top:10px"><span class="muted">相关知识点:</span> ${kps}</div>`:''}`);
+}
+
+/* ---------- overlay / add ---------- */
+function openOv(html){
+  document.getElementById('sheet').innerHTML=html+
+    `<div style="text-align:right;margin-top:14px"><button class="btn ghost" onclick="closeOv()">关闭</button></div>`;
+  document.getElementById('ov').classList.add('on');
+  mathify(document.getElementById('sheet'));
+}
+function closeOv(){document.getElementById('ov').classList.remove('on');}
+let addType='study';
+function openAdd(){
+  const seg=(t,zh)=>`<button class="${addType===t?'on':''}" onclick="addType='${t}';openAdd()">${zh}</button>`;
+  let fields='';
+  if(addType==='study')fields=`<label>今天学到/遇到了什么</label><textarea id="a1" placeholder="一句话"></textarea>
+    <label>分类(可空)</label><input id="a2" placeholder="course / self / paper …">
+    <label>链接(可空)</label><input id="a3">`;
+  if(addType==='kp')fields=`<label>标题(英文)</label><input id="a1" placeholder="empirical Bayes">
+    <label>标题(中文,可空)</label><input id="a2">
+    <label>为什么想记 / 哪里不懂(可空)</label><textarea id="a3"></textarea>`;
+  if(addType==='read')fields=`<label>标题</label><input id="a1">
+    <label>链接(可空)</label><input id="a2">
+    <label>谁推荐的(可空)</label><input id="a3">`;
+  if(addType==='qa')fields=`<label>问题</label><textarea id="a1" placeholder="我想知道…"></textarea>
+    <label>主题(可空)</label><input id="a2">`;
+  openOv(`<h3>记一条</h3>
+    <div class="seg" style="margin:10px 0">${seg('study','学到')}${seg('kp','知识点')}${seg('read','想读')}${seg('qa','提问')}</div>
+    ${fields}<div style="margin-top:14px"><button class="btn" onclick="saveAdd()">保存</button></div>`);
+}
+async function saveAdd(){
+  const v=i=>document.getElementById('a'+i)?.value?.trim()||null;
+  let r={};
+  try{
+    if(addType==='study')r=await sb.from('study_log').insert({takeaway:v(1),category:v(2),link:v(3),source:'web',study_on:todayStr()});
+    if(addType==='kp')r=await sb.from('knowledge_points').insert({slug:(v(1)||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''),
+      title_en:v(1),title_zh:v(2),body_md:null,status:'stub',origin:'manual',topic:null,kind:'concept',
+      sources:v(3)?[{label:'她的疑问',url:'',locator:v(3)}]:[]});
+    if(addType==='read')r=await sb.from('reading_queue').insert({title:v(1),link:v(2),recommender:v(3)||'自查'});
+    if(addType==='qa')r=await sb.from('qa_log').insert({question:v(1),topic:v(2),window_name:'web'});
+  }catch(e){return toast('失败: '+e.message)}
+  if(r.error)return toast('失败: '+r.error.message);
+  closeOv();toast('已记下,我这边会跟进');loadAll();
+}
+boot();
+</script>
+</body>
+</html>
