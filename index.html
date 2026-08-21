@@ -145,7 +145,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-08-21e';
+const BUILD='2026-08-21f';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -427,26 +427,39 @@ function rTerms(){
 }
 
 /* ---------- 阅读 ---------- */
+const RQ_ST={reading:'在读',queued:'排队',done:'读完',dropped:'放弃'};
+function rqRow(r){
+  const noRes=(r.kind==='book'||r.kind==='chapter')&&!r.link;
+  return `<div class="row" onclick="openRead('${r.id}')">
+    <div class="t">${esc(r.title)}
+      <span class="chip st-${({reading:'draft',queued:'stub',done:'done',dropped:'stub'})[r.status]}">${RQ_ST[r.status]}</span>
+      <span class="stars">${'★'.repeat(4-r.priority)}</span>
+      ${noRes?'<span class="chip" style="color:var(--danger)">无资源·待你下载</span>':''}</div>
+    <div class="m">来源:${esc(r.recommender||'(待补)')}${r.progress?' · '+esc(r.progress):''}</div></div>`;
+}
 function rRead(){
-  const grp={reading:'在读',queued:'排队',done:'读完',dropped:'放弃'};
-  let h='';
-  for(const st of Object.keys(grp)){
-    const list=D.rq.filter(r=>r.status===st);
-    if(!list.length&&(st==='dropped'))continue;
-    h+=`<div class="card"><h2>${grp[st]} <span class="n">${list.length}</span></h2>`+
-      (list.map(r=>`<div class="row" onclick="openRead('${r.id}')">
-        <div class="t">${esc(r.title)} <span class="chip">${esc(r.kind)}</span>
-          <span class="stars">${'★'.repeat(4-r.priority)}</span></div>
-        <div class="m">${esc(r.recommender||'')}${r.progress?' · '+esc(r.progress):''}</div></div>`).join('')||'<div class="empty">空</div>')+`</div>`;
-  }
+  const order={reading:0,queued:1,done:2,dropped:3};
+  const bySt=(a,b)=>order[a.status]-order[b.status]||a.priority-b.priority;
+  const papers=D.rq.filter(r=>r.kind==='paper').sort(bySt);
+  const books=D.rq.filter(r=>r.kind==='book'||r.kind==='chapter').sort(bySt);
+  const other=D.rq.filter(r=>!['paper','book','chapter'].includes(r.kind)).sort(bySt);
+  let h=`<div class="card"><h2>书 <span class="n">${books.length} · 红标=还没有电子资源,你下载后发我路径</span></h2>`+
+    (books.map(rqRow).join('')||'<div class="empty">空</div>')+`</div>`;
+  h+=`<div class="card"><h2>文献 <span class="n">${papers.length} · 正典在 Notion 文献库,这里管排队</span></h2>`+
+    (papers.map(rqRow).join('')||'<div class="empty">空</div>')+`</div>`;
+  if(other.length)h+=`<div class="card"><h2>其他 <span class="n">${other.length}</span></h2>`+other.map(rqRow).join('')+`</div>`;
   return h;
 }
 function openRead(id){
   const r=D.rq.find(x=>x.id===id);if(!r)return;
   const links=[r.link&&['打开↗',r.link],r.notion_url&&['Notion↗',r.notion_url]].filter(Boolean)
     .map(([t,u])=>`<a class="srcbtn" target="_blank" href="${esc(u)}">${t}</a>`).join('');
+  const noRes=(r.kind==='book'||r.kind==='chapter')&&!r.link;
   openOv(`<h3>${esc(r.title)}</h3>
-    <div class="muted">${esc(r.kind)} · ${esc(r.recommender||'')} · 优先级 ${r.priority}</div>
+    <div class="muted">${esc(r.kind)} · 优先级 ${r.priority}</div>
+    <div style="background:var(--well);border-radius:9px;padding:7px 10px;margin:8px 0;font-size:13px">
+      <b>来源</b>:${esc(r.recommender||'(待补)')}
+      ${noRes?'<br><span style="color:var(--danger)">还没有电子资源 —— 你下载后把文件丢进 Drive 书目录或发我路径,我挂上链接</span>':''}</div>
     <div style="margin:6px 0">${links}</div>
     ${r.note?`<div class="md">${md(r.note)}</div>`:''}
     <label>进度备注</label><input id="rq-prog" value="${esc(r.progress||'')}">
