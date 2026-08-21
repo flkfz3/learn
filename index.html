@@ -145,7 +145,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-08-21d';
+const BUILD='2026-08-21e';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -237,7 +237,7 @@ function render(){
   v.innerHTML=({today:rToday,courses:rCourses,kb:rKB,terms:rTerms,read:rRead,qa:rQA})[cur]();
   mathify(v);
 }
-const ORIGIN_ZH={qe:'QE 复习卡点',course:'课程',paper:'论文',telegram:'随手记',window:'窗口问答',manual:'手动'};
+const ORIGIN_ZH={qe:'QE 复习时你卡住过的点(7月31-8月8日复习记录)',course:'课程',paper:'论文',telegram:'随手记',window:'窗口问答',manual:'手动'};
 
 /* ---------- 今日 ---------- */
 function dayOf(ts){ if(!ts)return''; return new Intl.DateTimeFormat('en-CA',{timeZone:TZ}).format(new Date(ts)); }
