@@ -145,7 +145,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-08-21c';
+const BUILD='2026-08-21d';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -176,7 +176,11 @@ function md(s){
     if(!k)return m;
     return `<a href="javascript:void(0)" onclick="openKPslug('${slug}')">${esc(k.title_zh||k.title_en)}</a>`;
   });
-  const html=marked.parse(s,{mangle:false,headerIds:false});
+  // 数学片段先抽出护住,marked 跑完再放回,否则 \{ \\ _ 会被当 markdown 吃掉
+  const store=[];
+  s=s.replace(/\$\$[\s\S]+?\$\$|\$[^$\n]+?\$/g,m=>{store.push(m);return '@@MATH'+(store.length-1)+'@@';});
+  let html=marked.parse(s,{mangle:false,headerIds:false});
+  html=html.replace(/@@MATH(\d+)@@/g,(_,i)=>esc(store[+i]));
   return html;
 }
 function openKPslug(slug){
