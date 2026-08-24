@@ -145,11 +145,11 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-08-24b';
+const BUILD='2026-08-24c';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
-const COURSES={STAT8060:'Statistical Computing I',STAT8170:'Probability Theory I'};
+let COURSES={};  // 课程名从数据库取(私有),不写进公开页面
 const KINDZH={term:'术语',concept:'概念',theorem:'定理',trap:'易错',method:'方法'};
 const STZH={stub:'待写',draft:'草稿',done:'成稿'};
 let sb=null, D={kp:[],lec:[],qa:[],rq:[],sl:[]}, cur='today', selDate=todayStr();
@@ -225,6 +225,8 @@ async function loadAll(){
     sb.from('reading_queue').select('*').order('priority').order('created_at',{ascending:false}).limit(300),
     sb.from('study_log').select('*').order('study_on',{ascending:false}).limit(400)]);
   D={kp:kp.data||[],lec:lec.data||[],qa:qa.data||[],rq:rq.data||[],sl:sl.data||[]};
+  COURSES={};
+  D.lec.forEach(l=>{COURSES[l.course_code]=(l.extra&&l.extra.course_name)||l.course_code;});
   render();
 }
 document.getElementById('tabs').addEventListener('click',e=>{
@@ -299,7 +301,7 @@ function rToday(){
 /* ---------- 课程(一节课一个整体) ---------- */
 function rCourses(){
   let h='';
-  for(const code of Object.keys(COURSES)){
+  for(const code of Object.keys(COURSES).sort()){
     const lecs=D.lec.filter(l=>l.course_code===code);
     h+=`<div class="card"><h2>${esc(COURSES[code])} <span class="n">${code} · ${lecs.length} 节</span></h2>`+
       (lecs.map(l=>`<div class="row" onclick="openLecture('${l.id}')">
