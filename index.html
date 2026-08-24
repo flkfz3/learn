@@ -145,7 +145,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-08-24a';
+const BUILD='2026-08-24b';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -237,7 +237,7 @@ function render(){
   v.innerHTML=({today:rToday,courses:rCourses,kb:rKB,terms:rTerms,read:rRead,qa:rQA})[cur]();
   mathify(v);
 }
-const ORIGIN_ZH={meeting:'组会/会议',qe:'QE 复习时你卡住过的点(7月31-8月8日复习记录)',course:'课程',paper:'论文',telegram:'随手记',window:'窗口问答',manual:'手动'};
+const ORIGIN_ZH={meeting:'组会/会议',qe:'重点复习',course:'课程',paper:'论文',telegram:'随手记',window:'窗口问答',manual:'手动'};
 
 /* ---------- 今日 ---------- */
 function dayOf(ts){ if(!ts)return''; return new Intl.DateTimeFormat('en-CA',{timeZone:TZ}).format(new Date(ts)); }
@@ -319,8 +319,8 @@ function openLecture(id){
 }
 
 /* ---------- 知识库 ---------- */
-let kbQ='',kbTopic='',kbSt='',kbView='list',kbQE=false;
-const QE_TOPICS=['inference','decision-theory','linear-models'];  // QE theory = 统计推断 + 线性模型
+let kbQ='',kbTopic='',kbSt='',kbView='list',kbKey=false;
+const KEY_TOPICS=['inference','decision-theory','linear-models'];
 function rowKP(k){
   return `<div class="row" onclick="openKP('${k.id}')">
     <div class="t"><b>${esc(k.title_zh||k.title_en)}</b>
@@ -332,7 +332,7 @@ function rowKP(k){
 function rKB(){
   const topics=[...new Set(D.kp.filter(k=>k.kind!=='term').map(k=>k.topic).filter(Boolean))].sort();
   let list=D.kp.filter(k=>k.kind!=='term');
-  if(kbQE)list=list.filter(k=>QE_TOPICS.includes(k.topic));
+  if(kbKey)list=list.filter(k=>KEY_TOPICS.includes(k.topic));
   if(kbTopic)list=list.filter(k=>k.topic===kbTopic);
   if(kbSt)list=list.filter(k=>k.status===kbSt);
   if(kbQ){const q=kbQ.toLowerCase();list=list.filter(k=>
@@ -347,9 +347,8 @@ function rKB(){
         <option value="done" ${kbSt==='done'?'selected':''}>成稿</option>
         <option value="draft" ${kbSt==='draft'?'selected':''}>草稿</option>
         <option value="stub" ${kbSt==='stub'?'selected':''}>待写</option></select>
-      <button class="btn mini ${kbQE?'':'ghost'}" onclick="kbQE=!kbQE;kbTopic='';render()">QE 重考</button>
+      <button class="btn mini ${kbKey?'':'ghost'}" onclick="kbKey=!kbKey;kbTopic='';render()">重点</button>
       ${seg}</div>
-    ${kbQE?`<div class="muted" style="margin:-4px 2px 8px">推断 + 决策论 + 线性模型,共 ${list.length} 条。目标:theory 从 50 到 62+。</div>`:''}
     <div class="card">${kbView==='map'?rMap(list):list.map(rowKP).join('')||'<div class="empty">空</div>'}</div>`;
 }
 function rMap(list){
