@@ -145,7 +145,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-08-23a';
+const BUILD='2026-08-24a';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -246,7 +246,15 @@ function srcBtns(o){
   if(o.slides_url)b.push(['课件',o.slides_url]);
   if(o.transcript_url)b.push(['转录',o.transcript_url]);
   if(o.notes_pdf_url)b.push(['笔记 PDF',o.notes_pdf_url]);
-  return b.map(([t,u])=>`<a class="srcbtn" target="_blank" href="${esc(u)}">${t} ↗</a>`).join('');
+  // 非 http = 私有 coursefiles 桶里的对象路径,点开时现签一个短期链接
+  return b.map(([t,u])=>u.startsWith('http')
+    ? `<a class="srcbtn" target="_blank" href="${esc(u)}">${t} ↗</a>`
+    : `<a class="srcbtn" href="javascript:void(0)" onclick="openPrivate('${esc(u)}')">${t} 🔒</a>`).join('');
+}
+async function openPrivate(path){
+  const {data,error}=await sb.storage.from('coursefiles').createSignedUrl(path,3600);
+  if(error||!data)return toast('打不开: '+((error&&error.message)||'无权限'));
+  window.open(data.signedUrl,'_blank');
 }
 function kpChips(l){
   const ks=l.key_points||[];
