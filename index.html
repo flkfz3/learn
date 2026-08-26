@@ -148,7 +148,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-08-25c';
+const BUILD='2026-08-26a';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -282,7 +282,7 @@ function rToday(){
   h+=`<div class="card"><h2>课程 <span class="n">${d}</span></h2>`;
   h+=lec.length?lec.map(l=>`<div style="margin-bottom:10px">
       <b style="cursor:pointer" onclick="openLecture('${l.id}')">${esc(COURSES[l.course_code]||l.course_code)} →</b> <span class="muted">${esc(l.title||'')}</span>
-      <div class="md">${md(l.summary_md)}</div><div>${srcBtns(l)}</div>${kpChips(l)}</div>`).join('')
+      <div class="md">${md(l.summary_md)||(l.prep_md?'<span class="muted">还没上课 —— 预习笔记已备好,点课程名展开</span>':'')}</div><div>${srcBtns(l)}</div>${kpChips(l)}</div>`).join('')
     :`<div class="empty">这天没有课程记录</div>`;
   h+=`</div>`;
   h+=`<div class="card"><h2>学到 <span class="n">study log</span></h2>`;
@@ -309,7 +309,7 @@ function rCourses(){
     h+=`<div class="card"><h2>${esc(COURSES[code])} <span class="n">${code} · ${lecs.length} 节</span></h2>`+
       (lecs.map(l=>`<div class="row" onclick="openLecture('${l.id}')">
         <div class="t"><b>${l.lecture_date}</b> ${esc(l.title||'')}</div>
-        <div class="m">${(l.key_points||[]).length} 个知识点${l.notes_pdf_url?' · 有笔记 PDF':''}${l.transcript_url?' · 有转录':''}</div>
+        <div class="m">${l.prep_md&&!l.summary_md?'<span style="color:var(--accent)">预习已备</span>':`${(l.key_points||[]).length} 个知识点`}${l.notes_pdf_url?' · 有笔记 PDF':''}${l.transcript_url?' · 有转录':''}</div>
       </div>`).join('')||'<div class="empty">还没有记录</div>')+`</div>`;
   }
   return h;
@@ -349,7 +349,11 @@ function openLecture(id){
   openOv(`<h3>${esc(COURSES[l.course_code]||l.course_code)} · ${l.lecture_date}</h3>
     <div class="muted">${esc(l.title||'')}</div>
     <div style="margin:6px 0">${srcBtns(l)}</div>
-    <div class="md kp-body">${lectureBody(l)}</div>
+    ${l.prep_md?`<details class="kps" ${l.summary_md?'':'open'} style="margin-top:8px">
+      <summary>课前预习</summary>
+      <div class="md" style="background:var(--well);border-radius:9px;padding:10px 14px;margin-top:6px">${md(l.prep_md)}</div>
+      </details>`:''}
+    ${l.summary_md?`<div class="md kp-body">${lectureBody(l)}</div>`:''}
     ${kpChips(l)}`);
 }
 
