@@ -148,7 +148,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-08-25a';
+const BUILD='2026-08-25b';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -320,7 +320,11 @@ function openLecture(id){
     <div class="muted">${esc(l.title||'')}</div>
     <div style="margin:6px 0">${srcBtns(l)}</div>
     <div class="md kp-body">${md(l.summary_md)||'<p class="empty">暂无讲义</p>'}</div>
-    ${kpChips(l)}`);
+    ${kpChips(l)}
+    ${(()=>{const qs=D.qa.filter(q=>q.lecture_id===l.id);return qs.length?
+      `<div style="margin-top:14px"><b style="font-size:13.5px">读这节笔记时的问题与反思</b>`+
+      qs.map(q=>`<div class="row" onclick="closeOv();openQA('${q.id}')"><div class="t">${esc(q.question)}</div>
+        <div class="m">${dayOf(q.asked_at)}</div></div>`).join('')+`</div>`:''})()}`);
 }
 
 /* ---------- 知识库 ---------- */
@@ -514,6 +518,8 @@ function openQA(id){
   }).join('');
   openOv(`<h3 style="font-weight:600">${esc(q.question)}</h3>
     <div class="muted">${dayOf(q.asked_at)} · ${esc(q.window_name||'')}</div>
+    ${q.my_thought?`<details class="kps" open style="margin-top:10px"><summary>我当时是怎么想的</summary>
+      <div class="md" style="background:var(--well);border-radius:9px;padding:8px 12px;margin-top:6px">${md(q.my_thought)}</div></details>`:''}
     <div class="md kp-body">${q.answer_md?md(q.answer_md):'<p class="empty">答案还没归档。</p>'}</div>
     ${kps?`<div style="margin-top:10px"><span class="muted">相关知识点:</span> ${kps}</div>`:''}`);
 }
