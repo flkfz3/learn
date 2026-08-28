@@ -148,7 +148,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-08-26a';
+const BUILD='2026-08-28a';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -423,6 +423,7 @@ function svgRadial(center,nodes,edges){
   return s+`</svg></div><div class="muted" style="margin-top:6px">紫线 = 条目间引用;点节点打开${kbTopic?';<a href="javascript:void(0)" onclick="kbTopic=\'\';render()">← 回主题总览</a>':''}</div>`;
 }
 function srcOne(s){
+  if(s.lecture_id)return `<a class="srcbtn" href="javascript:void(0)" onclick="openLecture('${esc(s.lecture_id)}')">${esc(s.label)}${s.locator?' · '+esc(s.locator):''} →</a>`;
   if(s.meeting_id)return `<a class="srcbtn" href="javascript:void(0)" onclick="openMeetingNote('${esc(s.meeting_id)}')">${esc(s.label)} →</a>`;
   if(!s.url)return `<span class="srcbtn" style="cursor:default">${esc(s.label)}${s.locator?' · '+esc(s.locator):''}</span>`;
   return `<a class="srcbtn" target="_blank" href="${esc(s.url)}">${esc(s.label)}${s.locator?' · '+esc(s.locator):''} ↗</a>`;
