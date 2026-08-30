@@ -134,6 +134,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
     <button data-v="kb">知识库</button>
     <button data-v="terms">术语</button>
     <button data-v="read">阅读</button>
+    <button data-v="en">英语</button>
     <button data-v="qa">问答</button>
   </nav>
   <main id="view"></main>
@@ -148,7 +149,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-08-28b';
+const BUILD='2026-08-29a';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -221,13 +222,14 @@ function show(logged){
 
 /* ---------- data ---------- */
 async function loadAll(){
-  const [kp,lec,qa,rq,sl]=await Promise.all([
+  const [kp,lec,qa,rq,sl,en]=await Promise.all([
     sb.from('knowledge_points').select('*').order('updated_at',{ascending:false}).limit(1000),
     sb.from('lectures').select('*').order('lecture_date',{ascending:false}).limit(400),
     sb.from('qa_log').select('*').order('asked_at',{ascending:false}).limit(500),
     sb.from('reading_queue').select('*').order('priority').order('created_at',{ascending:false}).limit(300),
-    sb.from('study_log').select('*').order('study_on',{ascending:false}).limit(400)]);
-  D={kp:kp.data||[],lec:lec.data||[],qa:qa.data||[],rq:rq.data||[],sl:sl.data||[]};
+    sb.from('study_log').select('*').order('study_on',{ascending:false}).limit(400),
+    sb.from('english_log').select('*').order('asked_at',{ascending:false}).limit(1000)]);
+  D={kp:kp.data||[],lec:lec.data||[],qa:qa.data||[],rq:rq.data||[],sl:sl.data||[],en:en.data||[]};
   COURSES={};
   D.lec.forEach(l=>{COURSES[l.course_code]=(l.extra&&l.extra.course_name)||l.course_code;});
   render();
@@ -239,7 +241,7 @@ document.getElementById('tabs').addEventListener('click',e=>{
 });
 function render(){
   const v=document.getElementById('view');
-  v.innerHTML=({today:rToday,courses:rCourses,kb:rKB,terms:rTerms,read:rRead,qa:rQA})[cur]();
+  v.innerHTML=({today:rToday,courses:rCourses,kb:rKB,terms:rTerms,read:rRead,en:rEN,qa:rQA})[cur]();
   mathify(v);
 }
 const ORIGIN_ZH={meeting:'组会/会议',qe:'重点复习',course:'课程',paper:'论文',telegram:'随手记',window:'窗口问答',manual:'手动'};
@@ -476,6 +478,51 @@ function rTerms(){
     <div class="card">${list.map(k=>`<div class="row" onclick="openKP('${k.id}')">
       <div class="t"><b>${esc(k.title_en)}</b> — ${esc(k.title_zh||'')}</div>
       <div class="m">${esc((k.body_md||'').split('\n')[0].slice(0,90))}</div></div>`).join('')||'<div class="empty">空</div>'}</div>`;
+}
+
+async function openBook(path,page){
+  const {data,error}=await sb.storage.from('learnfiles').createSignedUrl(path,3600);
+  if(error||!data)return toast('打不开: '+((error&&error.message)||'无权限'));
+  window.open(data.signedUrl+'#page='+page,'_blank');
+}
+
+/* ---------- 英语 ---------- */
+let eQ='', eKind='';
+const EN_KIND={word:'单词',phrase:'短语',pattern:'句式',usage:'用法'};
+function rEN(){
+  let list=D.en.slice();
+  if(eKind)list=list.filter(x=>x.kind===eKind);
+  if(eQ){const q=eQ.toLowerCase();list=list.filter(x=>
+    (x.term+' '+(x.meaning_zh||'')+' '+(x.context||'')+' '+(x.note_md||'')).toLowerCase().includes(q));}
+  const never=D.en.filter(x=>!x.review_count).length;
+  const kinds=Object.keys(EN_KIND).filter(k=>D.en.some(x=>x.kind===k));
+  return `<div class="toolrow"><input type="search" placeholder="搜英语…" value="${esc(eQ)}" oninput="eQ=this.value;render()">
+      <span class="muted">${list.length} / ${D.en.length} 条 · 没复习过 ${never}</span></div>
+    <div class="toolrow"><button class="chip${eKind?'':' on'}" onclick="eKind='';render()">全部</button>
+      ${kinds.map(k=>`<button class="chip${eKind===k?' on':''}" onclick="eKind='${k}';render()">${EN_KIND[k]}</button>`).join('')}</div>
+    <div class="card">${list.map(x=>`<div class="row" onclick="openEN('${x.id}')">
+      <div class="t"><b>${esc(x.term)}</b> <span class="chip">${EN_KIND[x.kind]||x.kind}</span>
+        ${x.review_count?`<span class="stars">看过 ${x.review_count} 次</span>`:''}</div>
+      <div class="m">${esc(x.meaning_zh)}${x.source?' · '+esc(x.source):''}</div></div>`).join('')||'<div class="empty">还没有记录</div>'}</div>`;
+}
+function openEN(id){
+  const x=D.en.find(y=>y.id===id); if(!x)return;
+  openOv(`<h3>${esc(x.term)} <span class="chip">${EN_KIND[x.kind]||x.kind}</span></h3>
+    <div class="md"><p><b>${esc(x.meaning_zh)}</b></p>
+    ${x.context?`<blockquote>${esc(x.context)}</blockquote>`:''}
+    ${md(x.note_md||'')}
+    ${x.source?`<p class="muted">出处:${esc(x.source)}
+      ${x.source_path?`<button class="chip" onclick="openBook('${x.source_path}',${x.source_page||1})">📖 翻到原文</button>`:''}</p>`:''}
+    ${(x.tags||[]).length?`<p>${x.tags.map(t=>`<span class="chip">${esc(t)}</span>`).join(' ')}</p>`:''}</div>
+    <div style="margin-top:14px"><button onclick="reviewEN('${x.id}')">✓ 我看过了${x.review_count?`（已 ${x.review_count} 次）`:''}</button></div>`);
+}
+async function reviewEN(id){
+  const x=D.en.find(y=>y.id===id); if(!x)return;
+  const {error}=await sb.from('english_log').update({
+    last_reviewed_at:new Date().toISOString(), review_count:(x.review_count||0)+1}).eq('id',id);
+  if(error)return toast('记不上: '+error.message);
+  x.review_count=(x.review_count||0)+1; x.last_reviewed_at=new Date().toISOString();
+  toast('记下了'); closeOv(); render();
 }
 
 /* ---------- 阅读 ---------- */
