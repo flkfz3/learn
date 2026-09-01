@@ -46,32 +46,34 @@ header .sp{flex:1}
 
 /* ---------- 刷:信息流 ---------- */
 .fcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
-  padding:13px 14px 6px;margin-bottom:10px;box-shadow:var(--sh)}
+  padding:11px 13px 4px;margin-bottom:8px;box-shadow:var(--sh)}
 .fhead{display:flex;gap:10px;align-items:flex-start}
-.fav{width:38px;height:38px;border-radius:50%;flex:none;display:flex;align-items:center;
+.fav{width:34px;height:34px;border-radius:50%;flex:none;display:flex;align-items:center;
   justify-content:center;font-size:18px;background:var(--accent-soft);border:1px solid var(--line)}
 .fwho{font-weight:600;font-size:14.5px;color:var(--ink);display:flex;align-items:center;gap:5px}
 .fv{font-size:11px;background:var(--accent);color:#fff;border-radius:4px;padding:0 4px;line-height:15px}
 .fmeta{font-size:12px;color:var(--faint);margin-top:1px}
-.fbody{margin:8px 0 4px;font-size:15px;line-height:1.72;word-break:break-word}
+.fbody{margin:7px 0 4px;font-size:14px;line-height:1.62;word-break:break-word}
+.ftitle{display:block;font-weight:600;font-size:14.5px;margin-bottom:3px;line-height:1.45}
 .fbody p{margin:.35em 0}
 .fbody h1,.fbody h2,.fbody h3{font-size:15px;margin:.5em 0 .2em}
 .fquote{border-left:3px solid var(--accent-soft);padding:4px 0 4px 10px;color:var(--muted);
   font-size:14px;margin:6px 0}
 .fbar{display:flex;border-top:1px solid var(--line);margin-top:8px}
-.fbar button{flex:1;border:0;background:none;color:var(--muted);font-size:13px;padding:9px 0;
+.fbar button{flex:1;border:0;background:none;color:var(--muted);font-size:12.5px;padding:7px 0;
   cursor:pointer;border-radius:8px}
 .fbar button:hover{background:var(--well);color:var(--ink)}
 .fbar button.did{color:var(--accent);font-weight:600}
-.ftag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;
-  background:var(--well);color:var(--muted);margin-right:5px}
+.ftag{display:inline-block;font-size:11px;padding:0 7px;border-radius:999px;
+  background:var(--accent-soft);color:var(--accent);border:1px solid var(--line);margin-right:5px}
 .fend{text-align:center;color:var(--faint);font-size:13px;padding:18px 0}
 .fstat{display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted);
   background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:9px 13px;margin-bottom:10px}
 .fstat b{color:var(--ink);font-size:15px}
 .fquiz{background:var(--well);border-radius:10px;padding:9px 11px;margin-top:6px;font-size:14px}
 .fquiz summary{cursor:pointer;color:var(--accent);font-weight:600}
-nav{display:flex;gap:4px;border-bottom:1.5px solid var(--line);margin:4px 0 16px;overflow-x:auto}
+nav{display:flex;gap:4px;border-bottom:1.5px solid var(--line);margin:4px 0 16px;overflow-x:auto;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent)}
+nav::-webkit-scrollbar{display:none}
 nav button{border:0;background:none;color:var(--muted);font-size:15px;padding:9px 13px;
   cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap}
 nav button.on{color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
@@ -179,7 +181,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-01d';
+const BUILD='2026-09-01e';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -274,6 +276,10 @@ document.getElementById('tabs').addEventListener('click',e=>{
 });
 function render(){
   const v=document.getElementById('view');
+  // FAB 是 fixed 的,在信息流上会盖住正文(视觉审查实测每屏挡掉 3-4 个字);
+  // 刷页本来每张卡就有「提问」按钮,直接藏掉。
+  const fab=document.getElementById('fab');
+  if(fab) fab.style.display = (cur==='feed') ? 'none' : '';
   v.innerHTML=({feed:rFeed,today:rToday,courses:rCourses,kb:rKB,terms:rTerms,hw:rHW,read:rRead,en:rEN,qa:rQA})[cur]();
   mathify(v);
 }
@@ -440,15 +446,17 @@ function fcard(c){
   if(c.due)     extra+=`<div class="muted" style="margin-top:4px">${dueLabel(c.due)}</div>`;
   if(c.quiz && c.body) extra+=`<details class="fquiz"><summary>先自己想一下,再点开看当时的答案</summary>
      <div style="margin-top:6px">${md(c.body)}</div></details>`;
-  const bodyHtml = c.quiz ? '' : `<div class="fbody">${md((c.title?('**'+c.title+'** '):'')+c.body)}</div>`;
+  const bodyHtml = c.quiz ? '' :
+    `<div class="fbody">${c.title?`<span class="ftitle">${esc(c.title)}</span>`:''}${md(c.body)}</div>`;
+  const extraHtml = extra ? `<div style="margin:6px 0 2px">${extra}</div>` : '';
   return `<div class="fcard" data-k="${esc(c.key)}">
     <div class="fhead"><div class="fav">${c.av}</div>
       <div style="flex:1;min-width:0">
         <div class="fwho">${esc(c.who)}<span class="fv">${c.kind==='hw'?'DDL':'学'}</span></div>
         <div class="fmeta">${feedAgo(c.at)} · 来自 ${esc(c.from)} ${tag}</div>
       </div></div>
-    ${c.quiz?`<div class="fbody"><b>${esc(c.title)}</b></div>`:bodyHtml}
-    ${extra}
+    ${c.quiz?`<div class="fbody"><span class="ftitle">${esc(c.title)}</span></div>`:bodyHtml}
+    ${extraHtml}
     <div class="fbar">
       <button class="${r.later?'did':''}" onclick="feedAct(this,'${esc(c.key)}','${c.kind}','later')">🔁 稍后再看</button>
       <button onclick="feedAsk('${esc(c.key)}','${esc((c.title||c.who).replace(/'/g,''))}')">💬 提问</button>
