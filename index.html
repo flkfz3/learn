@@ -179,7 +179,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-01c';
+const BUILD='2026-09-01d';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -509,11 +509,18 @@ function feedObserve(){
   markSeen([...document.querySelectorAll('#feedlist .fcard')].map(x=>({key:x.dataset.k,kind:'?'})));
 }
 let seenQueue=[], seenTimer=null;
+async function flushSeen(){
+  const q=seenQueue.splice(0); if(!q.length||!sb)return;
+  await sb.from('feed_events').insert(q);
+}
 function markSeen(cards){
   cards.forEach(c=>{ const k=c.key||c; feKey(k).seen++; seenQueue.push({card_key:k,kind:c.kind||'card',action:'seen'}); });
   clearTimeout(seenTimer);
-  seenTimer=setTimeout(async()=>{ const q=seenQueue.splice(0); if(!q.length||!sb)return;
-    await sb.from('feed_events').insert(q); },1500);
+  seenTimer=setTimeout(flushSeen,800);
+  // 关标签/切后台时兜底,否则最后一批浏览记录会丢(实测滚 7 屏只落库了 2 屏)
+  if(!markSeen._bound){ markSeen._bound=true;
+    addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden')flushSeen(); });
+    addEventListener('pagehide',flushSeen); }
 }
 
 /* ---------- 作业 ---------- */
