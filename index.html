@@ -246,7 +246,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-01g';
+const BUILD='2026-09-01h';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -431,7 +431,12 @@ const PERSONA={
 };
 function personaFor(courseCode){ return courseCode==='STAT8170'?PERSONA.m8170:PERSONA.m8060; }
 function oneSentence(t,limit){
-  t=(t||'').replace(/\*\*/g,'').replace(/\n+/g,' ').trim();
+  // 先扔掉表格行/标题/代码块/引用——这些塞进一句话里会变成一串竖线,实测栽过
+  t=(t||'').split('\n')
+     .filter(l=>!/^\s*\|/.test(l) && !/^\s*#{1,6}\s/.test(l) && !/^\s*```/.test(l)
+                && !/^\s*[-*]{3,}\s*$/.test(l) && !/^\s*\|?[\s:-]+\|/.test(l))
+     .join('\n');
+  t=t.replace(/\*\*/g,'').replace(/^\s*[-*]\s+/gm,'').replace(/\n+/g,' ').trim();
   const m=t.match(/^[\s\S]{10,}?[。;;!?!?]/);
   let out=m?m[0]:t;
   if(out.length>limit) out=out.slice(0,limit)+'…';
@@ -496,7 +501,9 @@ function buildFeed(){
 
   /* ---- 单词精:有词源/钩子的才发,这类是"爽点" ---- */
   (D.en||[]).forEach(e=>{
-    const hook=(e.note_md||'').match(/词源|来自|同源|词根|原意/) ? e.note_md : '';
+    const nm=(e.note_md||'');
+    const hasTable=/^\s*\|/m.test(nm.split('\n\n')[0]||'');
+    const hook=(!hasTable && /词源|同源|词根|原意/.test(nm)) ? nm : '';
     push({key:'en:'+e.id, kind:'en', level:1, per:PERSONA.en, at:e.asked_at,
       from:e.kind||'word', head:e.term,
       text:oneSentence(hook||e.meaning_zh,110), full:e.note_md||e.meaning_zh,
