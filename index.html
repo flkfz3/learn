@@ -43,6 +43,34 @@ header .build{font-size:11px;color:var(--faint)}
 header .sp{flex:1}
 .iconbtn{border:1px solid var(--line);background:var(--card);color:var(--muted);
   border-radius:10px;padding:5px 10px;cursor:pointer;font-size:13px}
+
+/* ---------- 刷:信息流 ---------- */
+.fcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:13px 14px 6px;margin-bottom:10px;box-shadow:var(--sh)}
+.fhead{display:flex;gap:10px;align-items:flex-start}
+.fav{width:38px;height:38px;border-radius:50%;flex:none;display:flex;align-items:center;
+  justify-content:center;font-size:18px;background:var(--accent-soft);border:1px solid var(--line)}
+.fwho{font-weight:600;font-size:14.5px;color:var(--ink);display:flex;align-items:center;gap:5px}
+.fv{font-size:11px;background:var(--accent);color:#fff;border-radius:4px;padding:0 4px;line-height:15px}
+.fmeta{font-size:12px;color:var(--faint);margin-top:1px}
+.fbody{margin:8px 0 4px;font-size:15px;line-height:1.72;word-break:break-word}
+.fbody p{margin:.35em 0}
+.fbody h1,.fbody h2,.fbody h3{font-size:15px;margin:.5em 0 .2em}
+.fquote{border-left:3px solid var(--accent-soft);padding:4px 0 4px 10px;color:var(--muted);
+  font-size:14px;margin:6px 0}
+.fbar{display:flex;border-top:1px solid var(--line);margin-top:8px}
+.fbar button{flex:1;border:0;background:none;color:var(--muted);font-size:13px;padding:9px 0;
+  cursor:pointer;border-radius:8px}
+.fbar button:hover{background:var(--well);color:var(--ink)}
+.fbar button.did{color:var(--accent);font-weight:600}
+.ftag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;
+  background:var(--well);color:var(--muted);margin-right:5px}
+.fend{text-align:center;color:var(--faint);font-size:13px;padding:18px 0}
+.fstat{display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted);
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:9px 13px;margin-bottom:10px}
+.fstat b{color:var(--ink);font-size:15px}
+.fquiz{background:var(--well);border-radius:10px;padding:9px 11px;margin-top:6px;font-size:14px}
+.fquiz summary{cursor:pointer;color:var(--accent);font-weight:600}
 nav{display:flex;gap:4px;border-bottom:1.5px solid var(--line);margin:4px 0 16px;overflow-x:auto}
 nav button{border:0;background:none;color:var(--muted);font-size:15px;padding:9px 13px;
   cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap}
@@ -129,7 +157,8 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
     <button class="iconbtn" onclick="logout()">退出</button>
   </header>
   <nav id="tabs">
-    <button data-v="today" class="on">今日</button>
+    <button data-v="feed" class="on">刷</button>
+    <button data-v="today">今日</button>
     <button data-v="courses">课程</button>
     <button data-v="kb">知识库</button>
     <button data-v="terms">术语</button>
@@ -150,14 +179,14 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-01a';
+const BUILD='2026-09-01b';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
 let COURSES={};  // 课程名从数据库取(私有),不写进公开页面
 const KINDZH={term:'术语',concept:'概念',theorem:'定理',trap:'易错',method:'方法'};
 const STZH={stub:'待写',draft:'草稿',done:'成稿'};
-let sb=null, D={kp:[],lec:[],qa:[],rq:[],sl:[]}, cur='today', selDate=todayStr();
+let sb=null, D={kp:[],lec:[],qa:[],rq:[],sl:[]}, cur='feed', selDate=todayStr();
 
 document.getElementById('build').textContent='build '+BUILD;
 if(localStorage.getItem('learn-theme')==='dark'||
@@ -223,15 +252,17 @@ function show(logged){
 
 /* ---------- data ---------- */
 async function loadAll(){
-  const [kp,lec,qa,rq,sl,en,hw]=await Promise.all([
+  const [kp,lec,qa,rq,sl,en,hw,fe]=await Promise.all([
     sb.from('knowledge_points').select('*').order('updated_at',{ascending:false}).limit(1000),
     sb.from('lectures').select('*').order('lecture_date',{ascending:false}).limit(400),
     sb.from('qa_log').select('*').order('asked_at',{ascending:false}).limit(500),
     sb.from('reading_queue').select('*').order('priority').order('created_at',{ascending:false}).limit(300),
     sb.from('study_log').select('*').order('study_on',{ascending:false}).limit(400),
     sb.from('english_log').select('*').order('asked_at',{ascending:false}).limit(1000),
-    sb.from('homework').select('*').order('due_at',{ascending:false}).limit(200)]);
-  D={kp:kp.data||[],lec:lec.data||[],qa:qa.data||[],rq:rq.data||[],sl:sl.data||[],en:en.data||[],hw:hw.data||[]};
+    sb.from('homework').select('*').order('due_at',{ascending:false}).limit(200),
+    sb.from('feed_events').select('card_key,action,at').order('at',{ascending:false}).limit(4000)]);
+  D={kp:kp.data||[],lec:lec.data||[],qa:qa.data||[],rq:rq.data||[],sl:sl.data||[],en:en.data||[],hw:hw.data||[],fe:fe.data||[]};
+  buildFeed();
   COURSES={};
   D.lec.forEach(l=>{COURSES[l.course_code]=(l.extra&&l.extra.course_name)||l.course_code;});
   render();
@@ -243,10 +274,224 @@ document.getElementById('tabs').addEventListener('click',e=>{
 });
 function render(){
   const v=document.getElementById('view');
-  v.innerHTML=({today:rToday,courses:rCourses,kb:rKB,terms:rTerms,hw:rHW,read:rRead,en:rEN,qa:rQA})[cur]();
+  v.innerHTML=({feed:rFeed,today:rToday,courses:rCourses,kb:rKB,terms:rTerms,hw:rHW,read:rRead,en:rEN,qa:rQA})[cur]();
   mathify(v);
 }
 const ORIGIN_ZH={meeting:'组会/会议',qe:'重点复习',course:'课程',paper:'论文',telegram:'随手记',window:'窗口问答',manual:'手动'};
+
+/* ---------- 刷:信息流(参考微博的三段式卡片) ----------
+   设计意图,改之前先读:
+   1) 碎片化:知识点正文按 ## 小节切开,一张卡只承载一个小节;术语/英语/问答本身就是原子。
+   2) 从最基础开始:每张卡有 level(1 基础 / 2 展开 / 3 推导),没标记过"会了"的主题优先给 level 1。
+   3) 接触效应:看过的卡权重按 1/(1+看过次数) 衰减但不归零,隔得越久权重回升——本质是伪装成信息流的间隔重复。
+   4) 旧习惯:头像+博主名+"几小时前 来自X"+底部三键,布局照搬微博,肌肉记忆直接迁移。
+   5) 不确定性:每批抽样带随机抖动,顺序不可预测;偶尔插入回音卡/小测验卡。
+   来源必须一眼可见——"博主名"就是来源,这条与知识库的溯源铁律一致。            */
+let FEED=[], feedShown=0, feedSeen={}, feedBatch=12;
+
+function feKey(k){ return feedSeen[k] || (feedSeen[k]={seen:0,liked:false,later:false,last:0}); }
+function buildFeedSeen(){
+  feedSeen={};
+  (D.fe||[]).forEach(e=>{
+    const r=feKey(e.card_key), t=new Date(e.at).getTime();
+    if(e.action==='seen') r.seen++;
+    if(e.action==='like') r.liked=true;
+    if(e.action==='later')r.later=true;
+    if(t>r.last)r.last=t;
+  });
+}
+function mdFirstPara(t){
+  const s=(t||'').split(/\n\s*\n/).find(x=>x.trim() && !x.trim().startsWith('#'))||'';
+  return s.length>420? s.slice(0,420)+'…' : s;
+}
+/* 把讲义级正文切成小节卡 */
+function splitSections(body){
+  const out=[]; if(!body)return out;
+  const parts=body.split(/\n(?=##\s)/);
+  parts.forEach((sec,i)=>{
+    const m=sec.match(/^##\s*(.+)/);
+    const title=m?m[1].trim():'';
+    const text=(m?sec.slice(m[0].length):sec).trim();
+    if(text.length>40) out.push({title,text:text.length>700?text.slice(0,700)+'…':text,i});
+  });
+  return out;
+}
+function buildFeed(){
+  buildFeedSeen();
+  const C=[];
+  const push=(o)=>C.push(o);
+
+  /* 术语:最基础的一层 */
+  D.kp.filter(k=>k.kind==='term').forEach(k=>push({
+    key:'term:'+k.slug, kind:'term', level:1, who:'术语小抄', av:'📗',
+    from:k.topic||'术语', at:k.updated_at,
+    title:(k.title_en||'')+(k.title_zh?(' · '+k.title_zh):''),
+    body:mdFirstPara(k.body_md)||k.title_zh||'', slug:k.slug }));
+
+  /* 知识点:一句话 + 每个小节各一张 */
+  D.kp.filter(k=>k.kind!=='term').forEach(k=>{
+    const one=(k.body_md||'').match(/\*\*一句话[:：]\*\*\s*([\s\S]*?)(?:\n\n|$)/);
+    if(one) push({key:'kp1:'+k.slug, kind:'kp', level:1, who:k.title_zh||k.slug, av:'💡',
+      from:ORIGIN_ZH[k.origin]||'知识库', at:k.updated_at,
+      title:'一句话', body:one[1].trim(), slug:k.slug});
+    splitSections(k.body_md).forEach(sec=>push({
+      key:'kp:'+k.slug+':'+sec.i, kind:'kp', level:(/证明|推导|proof/i.test(sec.title)?3:2),
+      who:k.title_zh||k.slug, av:'💡', from:ORIGIN_ZH[k.origin]||'知识库', at:k.updated_at,
+      title:sec.title, body:sec.text, slug:k.slug}));
+  });
+
+  /* 课程 key_points:天然的原子卡 */
+  D.lec.forEach(l=>(l.key_points||[]).forEach((kp,i)=>push({
+    key:'lkp:'+l.id+':'+i, kind:'lec', level:kp.importance>=3?2:1,
+    who:(COURSES[l.course_code]||l.course_code), av:'🎓',
+    from:l.lecture_date+' 那节', at:l.lecture_date+'T12:00:00Z',
+    title:kp.title_zh||kp.title_en||'', body:kp.summary_zh||'', lecId:l.id})));
+
+  /* 英语:词 + 原句 */
+  (D.en||[]).forEach(e=>push({
+    key:'en:'+e.id, kind:'en', level:1, who:'英语', av:'🔤',
+    from:e.kind||'word', at:e.asked_at,
+    title:e.term, body:e.meaning_zh||e.note_md||'', quote:e.context||'',
+    bookPath:e.source_path, bookPage:e.source_page}));
+
+  /* 要读的 paper / 书 */
+  (D.rq||[]).filter(r=>r.status!=='done').forEach(r=>push({
+    key:'read:'+r.id, kind:'read', level:1, who:r.recommender||'待读', av:'📄',
+    from:r.kind||'paper', at:r.created_at,
+    title:r.title, body:r.note||'', link:r.link}));
+
+  /* 回音:你自己问过的问题 */
+  (D.qa||[]).forEach(q=>push({
+    key:'qa:'+q.id, kind:'qa', level:1, who:'你问过', av:'🗣',
+    from:(q.window_name||'')+' 窗口', at:q.asked_at,
+    title:q.question, body:q.answer_md||'', quiz:true}));
+
+  /* 需要考虑的事 */
+  (D.sl||[]).forEach(t=>push({
+    key:'sl:'+t.id, kind:'note', level:1, who:'随手记', av:'📌',
+    from:t.category||'笔记', at:t.study_on, title:'', body:t.takeaway||'', link:t.link}));
+
+  /* 作业倒计时 */
+  (D.hw||[]).filter(h=>h.due_at && new Date(h.due_at)>new Date()).forEach(h=>push({
+    key:'hw:'+h.id, kind:'hw', level:1, who:(COURSES[h.course_code]||h.course_code), av:'📝',
+    from:'作业', at:h.created_at, title:h.title+' · '+(h.exercises||''),
+    body:h.solution_note||'', due:h.due_at, pin:true}));
+
+  FEED=C.filter(c=>(c.body&&c.body.length>1)||c.quote||c.link);
+  feedShown=0;
+}
+/* 权重:基础优先 + 看过衰减 + 久未见回升 + 抖动 */
+function feedWeight(c){
+  const r=feKey(c.key), now=Date.now();
+  let w = c.pin?40 : ({term:1.0,kp:1.2,lec:1.15,en:1.0,read:.9,qa:.8,note:.7,hw:2})[c.kind]||1;
+  w *= (c.level===1?1.35:c.level===2?1:.7);
+  w /= (1+1.6*r.seen);
+  if(r.last){ const days=(now-r.last)/864e5; w *= Math.min(3, .35+days/2); }
+  if(r.liked) w*=.45;
+  if(r.later) w*=2.2;
+  return w*(0.7+Math.random()*0.9);
+}
+function nextBatch(n){
+  const pool=FEED.map(c=>({c,w:feedWeight(c)})).sort((a,b)=>b.w-a.w);
+  const out=[]; const used=new Set();
+  for(const p of pool){ if(out.length>=n)break; if(used.has(p.c.key))continue; used.add(p.c.key); out.push(p.c); }
+  return out;
+}
+function feedAgo(at){
+  if(!at)return'';
+  const d=(Date.now()-new Date(at).getTime())/6e4;
+  if(d<60)return Math.max(1,Math.floor(d))+'分钟前';
+  if(d<1440)return Math.floor(d/60)+'小时前';
+  if(d<43200)return Math.floor(d/1440)+'天前';
+  return new Intl.DateTimeFormat('zh-CN',{timeZone:TZ,month:'numeric',day:'numeric'}).format(new Date(at));
+}
+function fcard(c){
+  const r=feKey(c.key);
+  const tag = c.level===1?'<span class="ftag">基础</span>':c.level===3?'<span class="ftag">推导</span>':'';
+  let extra='';
+  if(c.quote)   extra+=`<div class="fquote">${esc(c.quote)}</div>`;
+  if(c.bookPath)extra+=`<a class="srcbtn" href="javascript:void(0)" onclick="openBook('${esc(c.bookPath)}',${(+c.bookPage)||1})">📖 翻到原文</a>`;
+  if(c.link)    extra+=`<a class="srcbtn" target="_blank" href="${esc(c.link)}">打开 ↗</a>`;
+  if(c.slug)    extra+=`<a class="srcbtn" href="javascript:void(0)" onclick="openKPslug('${esc(c.slug)}')">看全条 →</a>`;
+  if(c.lecId)   extra+=`<a class="srcbtn" href="javascript:void(0)" onclick="openLecture('${esc(c.lecId)}')">整节讲义 →</a>`;
+  if(c.due)     extra+=`<div class="muted" style="margin-top:4px">${dueLabel(c.due)}</div>`;
+  if(c.quiz && c.body) extra+=`<details class="fquiz"><summary>先自己想一下,再点开看当时的答案</summary>
+     <div style="margin-top:6px">${md(c.body)}</div></details>`;
+  const bodyHtml = c.quiz ? '' : `<div class="fbody">${md((c.title?('**'+c.title+'** '):'')+c.body)}</div>`;
+  return `<div class="fcard" data-k="${esc(c.key)}">
+    <div class="fhead"><div class="fav">${c.av}</div>
+      <div style="flex:1;min-width:0">
+        <div class="fwho">${esc(c.who)}<span class="fv">${c.kind==='hw'?'DDL':'学'}</span></div>
+        <div class="fmeta">${feedAgo(c.at)} · 来自 ${esc(c.from)} ${tag}</div>
+      </div></div>
+    ${c.quiz?`<div class="fbody"><b>${esc(c.title)}</b></div>`:bodyHtml}
+    ${extra}
+    <div class="fbar">
+      <button class="${r.later?'did':''}" onclick="feedAct(this,'${esc(c.key)}','${c.kind}','later')">🔁 稍后再看</button>
+      <button onclick="feedAsk('${esc(c.key)}','${esc((c.title||c.who).replace(/'/g,''))}')">💬 提问</button>
+      <button class="${r.liked?'did':''}" onclick="feedAct(this,'${esc(c.key)}','${c.kind}','like')">👍 会了</button>
+    </div></div>`;
+}
+function rFeed(){
+  const today=todayStr();
+  const seenToday=(D.fe||[]).filter(e=>e.action==='seen'&&dayOf(e.at)===today).length;
+  const days=new Set((D.fe||[]).map(e=>dayOf(e.at))); let streak=0;
+  for(let i=0;;i++){ const d=new Date(Date.now()-i*864e5);
+    const k=new Intl.DateTimeFormat('en-CA',{timeZone:TZ}).format(d);
+    if(days.has(k))streak++; else if(i>0)break; else break; }
+  const first=nextBatch(feedBatch); feedShown=first.length;
+  setTimeout(feedObserve,0);
+  return `<div class="fstat"><span>今天刷了 <b>${seenToday}</b> 条</span>
+      <span>连着 <b>${streak}</b> 天</span>
+      <span>池子里 <b>${FEED.length}</b> 条</span>
+      <span style="flex:1"></span>
+      <button class="iconbtn" onclick="reshuffle()">换一换</button></div>
+    <div id="feedlist">${first.map(fcard).join('')}</div>
+    <div class="fend" id="feedmore">往下拉,还有…</div>`;
+}
+function reshuffle(){ render(); window.scrollTo({top:0,behavior:'smooth'}); }
+async function feedAct(btn,key,kind,action){
+  btn.classList.toggle('did');
+  const r=feKey(key); if(action==='like')r.liked=!r.liked; if(action==='later')r.later=!r.later;
+  await sb.from('feed_events').insert({card_key:key,kind:kind,action:action});
+  toast(action==='like'?'记下了:这条你会了':'加到稍后再看');
+}
+function feedAsk(key,label){
+  openOv(`<h3>就这条提问</h3><div class="muted" style="margin-bottom:8px">${esc(label)}</div>
+    <textarea id="fq" rows="4" placeholder="写下你的疑问,下次窗口会看到"></textarea>
+    <button class="btn" onclick="feedAskGo('${esc(key)}')">记下</button>`);
+}
+async function feedAskGo(key){
+  const t=(document.getElementById('fq').value||'').trim(); if(!t)return;
+  const {error}=await sb.from('qa_log').insert({question:t,window_name:'feed',topic:key});
+  closeOv(); toast(error?('没存上: '+error.message):'记下了'); if(!error)loadAll();
+}
+/* 无限流:滚到底自动续 */
+let feedIO=null;
+function feedObserve(){
+  const more=document.getElementById('feedmore'); if(!more)return;
+  if(feedIO)feedIO.disconnect();
+  feedIO=new IntersectionObserver(es=>{
+    if(!es[0].isIntersecting)return;
+    const list=document.getElementById('feedlist'); if(!list)return;
+    const shownKeys=new Set([...list.children].map(x=>x.dataset.k));
+    const more2=FEED.map(c=>({c,w:feedWeight(c)})).filter(p=>!shownKeys.has(p.c.key))
+                    .sort((a,b)=>b.w-a.w).slice(0,feedBatch).map(p=>p.c);
+    if(!more2.length){ document.getElementById('feedmore').textContent='今天的池子见底了 —— 去别的页看看,或者明天再来'; feedIO.disconnect(); return; }
+    list.insertAdjacentHTML('beforeend',more2.map(fcard).join(''));
+    mathify(list);
+    markSeen(more2);
+  },{rootMargin:'400px'});
+  feedIO.observe(more);
+  markSeen([...document.querySelectorAll('#feedlist .fcard')].map(x=>({key:x.dataset.k,kind:'?'})));
+}
+let seenQueue=[], seenTimer=null;
+function markSeen(cards){
+  cards.forEach(c=>{ const k=c.key||c; feKey(k).seen++; seenQueue.push({card_key:k,kind:c.kind||'card',action:'seen'}); });
+  clearTimeout(seenTimer);
+  seenTimer=setTimeout(async()=>{ const q=seenQueue.splice(0); if(!q.length||!sb)return;
+    await sb.from('feed_events').insert(q); },1500);
+}
 
 /* ---------- 作业 ---------- */
 function dueLabel(iso){
