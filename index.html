@@ -179,7 +179,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-01b';
+const BUILD='2026-09-01c';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -289,6 +289,12 @@ const ORIGIN_ZH={meeting:'组会/会议',qe:'重点复习',course:'课程',paper
    来源必须一眼可见——"博主名"就是来源,这条与知识库的溯源铁律一致。            */
 let FEED=[], feedShown=0, feedSeen={}, feedBatch=12;
 
+/* 同一天内稳定的哈希:让"哪张变成测验"每天换一批,但当天刷两次结果一致 */
+function hashDay(str){
+  const d=todayStr(); let h=0; const t=str+d;
+  for(let i=0;i<t.length;i++){ h=(h*31+t.charCodeAt(i))|0; }
+  return Math.abs(h);
+}
 function feKey(k){ return feedSeen[k] || (feedSeen[k]={seen:0,liked:false,later:false,last:0}); }
 function buildFeedSeen(){
   feedSeen={};
@@ -300,9 +306,22 @@ function buildFeedSeen(){
     if(t>r.last)r.last=t;
   });
 }
+/* 截断必须在段落边界,且不能把 $...$ 切成单数——切坏了 KaTeX 会整块渲染失败 */
+function clipMD(t,limit){
+  const paras=(t||'').split(/\n\s*\n/);
+  let out='';
+  for(const q of paras){
+    const next = out? out+'\n\n'+q : q;
+    if(next.length>limit && out) break;
+    out=next;
+    if(out.length>limit) break;
+  }
+  if((out.match(/\$/g)||[]).length % 2) out=out.replace(/\$[^$]*$/,'');
+  return out.length<(t||'').length ? out.trim()+'\n\n…' : out.trim();
+}
 function mdFirstPara(t){
   const s=(t||'').split(/\n\s*\n/).find(x=>x.trim() && !x.trim().startsWith('#'))||'';
-  return s.length>420? s.slice(0,420)+'…' : s;
+  return clipMD(s,420);
 }
 /* 把讲义级正文切成小节卡 */
 function splitSections(body){
@@ -312,7 +331,7 @@ function splitSections(body){
     const m=sec.match(/^##\s*(.+)/);
     const title=m?m[1].trim():'';
     const text=(m?sec.slice(m[0].length):sec).trim();
-    if(text.length>40) out.push({title,text:text.length>700?text.slice(0,700)+'…':text,i});
+    if(text.length>40) out.push({title,text:clipMD(text,620),i});
   });
   return out;
 }
@@ -322,11 +341,15 @@ function buildFeed(){
   const push=(o)=>C.push(o);
 
   /* 术语:最基础的一层 */
-  D.kp.filter(k=>k.kind==='term').forEach(k=>push({
-    key:'term:'+k.slug, kind:'term', level:1, who:'术语小抄', av:'📗',
-    from:k.topic||'术语', at:k.updated_at,
-    title:(k.title_en||'')+(k.title_zh?(' · '+k.title_zh):''),
-    body:mdFirstPara(k.body_md)||k.title_zh||'', slug:k.slug }));
+  D.kp.filter(k=>k.kind==='term').forEach(k=>{
+    const ask = k.title_en && k.title_zh && (hashDay(k.slug)%4===0);   // 四分之一变成小测验
+    push({ key:'term:'+k.slug, kind:'term', level:1,
+      who: ask?'考你一下':'术语小抄', av: ask?'🎲':'📗',
+      from:k.topic||'术语', at:k.updated_at,
+      title: ask? ('“'+k.title_zh+'” 英文怎么说?') : ((k.title_en||'')+(k.title_zh?(' · '+k.title_zh):'')),
+      body: ask? ('**'+k.title_en+'**\n\n'+(mdFirstPara(k.body_md)||'')) : (mdFirstPara(k.body_md)||k.title_zh||''),
+      quiz: ask, slug:k.slug });
+  });
 
   /* 知识点:一句话 + 每个小节各一张 */
   D.kp.filter(k=>k.kind!=='term').forEach(k=>{
