@@ -246,7 +246,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-01f';
+const BUILD='2026-09-01g';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -411,72 +411,123 @@ function splitSections(body){
   });
   return out;
 }
+/* ===== 内容层:按"社交媒体为什么上瘾"的机制重做 =====
+   1 变比率强化:大多数帖平淡,少数是真·爽点(词源八卦/老师金句/反直觉事实),随机出现。
+   2 单位成本极低:一条帖 = 一句话,2 秒读完;长内容折成「全文」,不把阅读任务塞进流里。
+   3 好奇缺口:标题写成"钩子"而不是"小节名"——大脑要闭合这个循环才肯往下滑。
+   4 自我相关:「过去的你」问过的问题、你标过会了的东西,是最强的停留点。
+   5 人格化:每个来源是一个有固定语气的"博主",不是一个数据库表名。
+   6 形式多样:一句话/投票/转发/翻车预警/回音/对比,像微博有图有转发有投票。      */
+const PERSONA={
+  m8170:{n:'测度论老师',a:'测',v:1},
+  m8060:{n:'计算课代表',a:'算',v:1},
+  term :{n:'术语君',    a:'术',v:0},
+  en   :{n:'单词精',    a:'词',v:0},
+  paper:{n:'论文墙',    a:'读',v:1},
+  past :{n:'过去的你',  a:'你',v:0},
+  ddl  :{n:'DDL 提醒姬',a:'急',v:1},
+  trap :{n:'翻车预警',  a:'坑',v:0},
+  note :{n:'随手记',    a:'记',v:0},
+};
+function personaFor(courseCode){ return courseCode==='STAT8170'?PERSONA.m8170:PERSONA.m8060; }
+function oneSentence(t,limit){
+  t=(t||'').replace(/\*\*/g,'').replace(/\n+/g,' ').trim();
+  const m=t.match(/^[\s\S]{10,}?[。;;!?!?]/);
+  let out=m?m[0]:t;
+  if(out.length>limit) out=out.slice(0,limit)+'…';
+  if((out.match(/\$/g)||[]).length%2) out=out.replace(/\$[^$]*$/,'');
+  return out.trim();
+}
+/* 从正文里挖"常见错 / 坑 / 注意"这类小节,拆成一条一条的翻车预警 */
+function trapItems(body){
+  if(!body)return [];
+  const out=[];
+  const sec=body.split(/\n(?=##\s)/).find(x=>/^##\s*(常见错|坑|注意|易错)/.test(x));
+  if(!sec)return out;
+  sec.split('\n').forEach(l=>{
+    const m=l.match(/^[-*]\s+(.+)/);
+    if(m && m[1].length>12) out.push(m[1].replace(/\*\*/g,'').trim());
+  });
+  return out;
+}
 function buildFeed(){
   buildFeedSeen();
-  const C=[];
-  const push=(o)=>C.push(o);
+  const C=[]; const push=o=>C.push(o);
 
-  /* 术语:最基础的一层 */
-  D.kp.filter(k=>k.kind==='term').forEach(k=>{
-    const ask = k.title_en && k.title_zh && (hashDay(k.slug)%4===0);   // 四分之一变成小测验
-    push({ key:'term:'+k.slug, kind:'term', level:1,
-      who: ask?'考你一下':'术语小抄', av: ask?'🎲':'📗',
-      from:k.topic||'术语', at:k.updated_at,
-      title: ask? ('“'+k.title_zh+'” 英文怎么说?') : ((k.title_en||'')+(k.title_zh?(' · '+k.title_zh):'')),
-      body: ask? ('**'+k.title_en+'**\n\n'+(mdFirstPara(k.body_md)||'')) : (mdFirstPara(k.body_md)||k.title_zh||''),
-      quiz: ask, slug:k.slug });
-  });
-
-  /* 知识点:一句话 + 每个小节各一张 */
+  /* ---- 一句话帖:每个知识点的定调句,读完 2 秒 ---- */
   D.kp.filter(k=>k.kind!=='term').forEach(k=>{
     const one=(k.body_md||'').match(/\*\*一句话[:：]\*\*\s*([\s\S]*?)(?:\n\n|$)/);
-    if(one) push({key:'kp1:'+k.slug, kind:'kp', level:1, who:k.title_zh||k.slug, av:'💡',
-      from:ORIGIN_ZH[k.origin]||'知识库', at:k.updated_at,
-      title:'一句话', body:one[1].trim(), slug:k.slug});
-    splitSections(k.body_md).forEach(sec=>push({
-      key:'kp:'+k.slug+':'+sec.i, kind:'kp', level:(/证明|推导|proof/i.test(sec.title)?3:2),
-      who:k.title_zh||k.slug, av:'💡', from:ORIGIN_ZH[k.origin]||'知识库', at:k.updated_at,
-      title:sec.title, body:sec.text, slug:k.slug}));
+    const per=k.origin==='course'?PERSONA.m8170:PERSONA.term;
+    if(one) push({key:'kp1:'+k.slug, kind:'kp', level:1, per, at:k.updated_at,
+      from:k.title_zh||k.slug, head:k.title_zh||k.slug,
+      text:oneSentence(one[1],110), full:one[1], slug:k.slug});
+    /* ---- 翻车预警:把"常见错"拆成一条一条 ---- */
+    trapItems(k.body_md).forEach((t,i)=>push({
+      key:'trap:'+k.slug+':'+i, kind:'kp', level:2, per:PERSONA.trap, at:k.updated_at,
+      from:k.title_zh||k.slug, head:'这里很多人栽过',
+      text:oneSentence(t,120), full:t, slug:k.slug, hot:1}));
+    /* ---- 展开帖:小节标题当钩子,正文折起来 ---- */
+    splitSections(k.body_md).forEach(sec=>{
+      if(!sec.title)return;
+      push({key:'kp:'+k.slug+':'+sec.i, kind:'kp',
+        level:(/证明|推导|proof/i.test(sec.title)?3:2), per:PERSONA.term, at:k.updated_at,
+        from:k.title_zh||k.slug, head:sec.title,
+        text:oneSentence(sec.text,100), full:sec.text, slug:k.slug});
+    });
   });
 
-  /* 课程 key_points:天然的原子卡 */
+  /* ---- 课堂要点:老师人格 + 要点一句话 ---- */
   D.lec.forEach(l=>(l.key_points||[]).forEach((kp,i)=>push({
     key:'lkp:'+l.id+':'+i, kind:'lec', level:kp.importance>=3?2:1,
-    who:(COURSES[l.course_code]||l.course_code), av:'🎓',
-    from:l.lecture_date+' 那节', at:l.lecture_date+'T12:00:00Z',
-    title:kp.title_zh||kp.title_en||'', body:kp.summary_zh||'', lecId:l.id})));
+    per:personaFor(l.course_code), at:l.lecture_date+'T12:00:00Z',
+    from:(COURSES[l.course_code]||l.course_code)+' '+l.lecture_date.slice(5),
+    head:kp.title_zh||kp.title_en||'', text:oneSentence(kp.summary_zh,120),
+    full:kp.summary_zh, lecId:l.id, hot:kp.importance>=3?1:0})));
 
-  /* 英语:词 + 原句 */
-  (D.en||[]).forEach(e=>push({
-    key:'en:'+e.id, kind:'en', level:1, who:'英语', av:'🔤',
-    from:e.kind||'word', at:e.asked_at,
-    title:e.term, body:e.meaning_zh||e.note_md||'', quote:e.context||'',
-    bookPath:e.source_path, bookPage:e.source_page}));
+  /* ---- 术语:一句话解释,四分之一变成投票式测验 ---- */
+  D.kp.filter(k=>k.kind==='term').forEach(k=>{
+    const quiz = k.title_en && k.title_zh && (hashDay(k.slug)%4===0);
+    push({key:'term:'+k.slug, kind:'term', level:1, per:PERSONA.term, at:k.updated_at,
+      from:'术语', head: quiz? ('“'+k.title_zh+'”英文怎么说?') : (k.title_en+' · '+k.title_zh),
+      text: quiz? '' : oneSentence(k.body_md,100),
+      full: quiz? ('**'+k.title_en+'**\n\n'+(mdFirstPara(k.body_md)||'')) : k.body_md,
+      quiz, slug:k.slug});
+  });
 
-  /* 要读的 paper / 书 */
+  /* ---- 单词精:有词源/钩子的才发,这类是"爽点" ---- */
+  (D.en||[]).forEach(e=>{
+    const hook=(e.note_md||'').match(/词源|来自|同源|词根|原意/) ? e.note_md : '';
+    push({key:'en:'+e.id, kind:'en', level:1, per:PERSONA.en, at:e.asked_at,
+      from:e.kind||'word', head:e.term,
+      text:oneSentence(hook||e.meaning_zh,110), full:e.note_md||e.meaning_zh,
+      quote:e.context||'', bookPath:e.source_path, bookPage:e.source_page,
+      hot:hook?1:0});
+  });
+
+  /* ---- 论文墙:转发式(引文块放摘要) ---- */
   (D.rq||[]).filter(r=>r.status!=='done').forEach(r=>push({
-    key:'read:'+r.id, kind:'read', level:1, who:r.recommender||'待读', av:'📄',
-    from:r.kind||'paper', at:r.created_at,
-    title:r.title, body:r.note||'', link:r.link}));
+    key:'read:'+r.id, kind:'read', level:1, per:PERSONA.paper, at:r.created_at,
+    from:r.recommender||'待读', head:'有人推荐你读这篇',
+    text:oneSentence(r.title,90), quote:oneSentence(r.note,140), full:r.note,
+    link:r.link}));
 
-  /* 回音:你自己问过的问题 */
+  /* ---- 过去的你:自我相关,最强停留点 ---- */
   (D.qa||[]).forEach(q=>push({
-    key:'qa:'+q.id, kind:'qa', level:1, who:'你问过', av:'🗣',
-    from:(q.window_name||'')+' 窗口', at:q.asked_at,
-    title:q.question, body:q.answer_md||'', quiz:true}));
+    key:'qa:'+q.id, kind:'qa', level:1, per:PERSONA.past, at:q.asked_at,
+    from:(q.window_name||'')+'窗口', head:'你问过这个',
+    text:oneSentence(q.question,110), full:q.answer_md, quiz:!!q.answer_md}));
 
-  /* 需要考虑的事 */
   (D.sl||[]).forEach(t=>push({
-    key:'sl:'+t.id, kind:'note', level:1, who:'随手记', av:'📌',
-    from:t.category||'笔记', at:t.study_on, title:'', body:t.takeaway||'', link:t.link}));
+    key:'sl:'+t.id, kind:'note', level:1, per:PERSONA.note, at:t.study_on,
+    from:t.category||'笔记', head:'', text:oneSentence(t.takeaway,120),
+    full:t.takeaway, link:t.link}));
 
-  /* 作业倒计时 */
   (D.hw||[]).filter(h=>h.due_at && new Date(h.due_at)>new Date()).forEach(h=>push({
-    key:'hw:'+h.id, kind:'hw', level:1, who:(COURSES[h.course_code]||h.course_code), av:'📝',
-    from:'作业', at:h.created_at, title:h.title+' · '+(h.exercises||''),
-    body:h.solution_note||'', due:h.due_at, pin:true}));
+    key:'hw:'+h.id, kind:'hw', level:1, per:PERSONA.ddl, at:h.created_at,
+    from:(COURSES[h.course_code]||h.course_code),
+    head:h.title+' · '+(h.exercises||''), text:'', due:h.due_at, pin:true}));
 
-  FEED=C.filter(c=>(c.body&&c.body.length>1)||c.quote||c.link);
+  FEED=C.filter(c=>(c.text&&c.text.length>1)||c.quiz||c.due);
   feedShown=0;
 }
 /* 权重:基础优先 + 看过衰减 + 久未见回升 + 抖动 */
@@ -488,6 +539,7 @@ function feedWeight(c){
   if(r.last){ const days=(now-r.last)/864e5; w *= Math.min(3, .35+days/2); }
   if(r.liked) w*=.45;
   if(r.later) w*=2.2;
+  if(c.hot) w*=1.5;                    // 词源八卦/翻车预警/老师强调的点 = 变比率里的"中奖"
   return w*(0.7+Math.random()*0.9);
 }
 function nextBatch(n){
@@ -505,28 +557,34 @@ function feedAgo(at){
   if(d<43200)return Math.floor(d/1440)+'天前';
   return new Intl.DateTimeFormat('zh-CN',{timeZone:TZ,month:'numeric',day:'numeric'}).format(new Date(at));
 }
-function wbAvatarText(c){
-  return ({term:'术',kp:'知',lec:'课',en:'EN',read:'读',qa:'问',note:'记',hw:'业'})[c.kind]||'学';
-}
 function fcard(c){
-  const r=feKey(c.key);
-  const chip = c.level===1?'<span class="wbchip">基础</span>':c.level===3?'<span class="wbchip">推导</span>':'';
+  const r=feKey(c.key), per=c.per||{n:'学习',a:'学',v:0};
+  const chip = c.hot?'<span class="wbchip">🔥</span>':(c.level===1?'<span class="wbchip">基础</span>':c.level===3?'<span class="wbchip">推导</span>':'');
   let links='';
   if(c.bookPath)links+=`<span class="wblink" onclick="openBook('${esc(c.bookPath)}',${(+c.bookPage)||1})">翻到原文</span>`;
   if(c.link)    links+=`<a class="wblink" target="_blank" href="${esc(c.link)}">打开原文</a>`;
-  if(c.slug)    links+=`<span class="wblink" onclick="openKPslug('${esc(c.slug)}')">全文</span>`;
+  if(c.slug)    links+=`<span class="wblink" onclick="openKPslug('${esc(c.slug)}')">进主页</span>`;
   if(c.lecId)   links+=`<span class="wblink" onclick="openLecture('${esc(c.lecId)}')">整节讲义</span>`;
-  const body = c.quiz
-    ? `<div class="wbtext"><span class="tt">${esc(c.title)}</span></div>
-       <details class="wbquiz"><summary>先自己想,再点开</summary><div style="margin-top:6px">${md(c.body)}</div></details>`
-    : `<div class="wbtext">${c.title?`<span class="tt">${esc(c.title)}</span> `:''}${md(c.body)}</div>`;
+
+  // 正文 = 钩子一行 + 一句话;长内容折进「全文」,不把阅读任务塞进流里
+  let body=`<div class="wbtext">`;
+  if(c.head) body+=`<span class="tt">${esc(c.head)}</span>${c.text?' ':''}`;
+  if(c.text) body+=md(c.text).replace(/^<p>|<\/p>$/g,'');
+  body+=`</div>`;
+  const longer = c.full && c.full.replace(/\s/g,'').length > (c.text||'').replace(/\s/g,'').length+8;
+  if(c.quiz){
+    body+=`<details class="wbquiz" onclick="event.stopPropagation()"><summary>${c.kind==='qa'?'当时是怎么答的':'先自己想,再点开'}</summary>
+           <div style="margin-top:6px">${md(c.full||'')}</div></details>`;
+  }else if(longer){
+    body+=`<details class="wbquiz"><summary>全文</summary><div style="margin-top:6px">${md(c.full)}</div></details>`;
+  }
   return `<div class="wbpost" data-k="${esc(c.key)}">
-    <span class="wbmore" title="不想看这条">⌄</span>
+    <span class="wbmore" onclick="feedNope('${esc(c.key)}','${c.kind}')" title="不想看这条">⌄</span>
     <div class="wbtop">
-      <div class="wbav">${wbAvatarText(c)}</div>
+      <div class="wbav">${esc(per.a)}</div>
       <div style="flex:1;min-width:0">
-        <div class="wbname">${esc(c.who)}<span class="wbbadge">${c.kind==='hw'?'DDL':'V'}</span></div>
-        <div class="wbfrom">${feedAgo(c.at)} · 来自 <b>${esc(c.from)}</b>${chip}</div>
+        <div class="wbname">${esc(per.n)}${per.v?'<span class="wbbadge">V</span>':''}</div>
+        <div class="wbfrom">${feedAgo(c.at)} · 来自 <b>${esc(c.from||'')}</b>${chip}</div>
       </div></div>
     ${body}
     ${c.quote?`<div class="wbquote">${esc(c.quote)}</div>`:''}
@@ -534,9 +592,9 @@ function fcard(c){
     ${links?`<div style="margin:6px 0 2px">${links}</div>`:''}
     <div class="wbicons">
       <button class="${r.liked?'on':''}" onclick="feedAct(this,'${esc(c.key)}','${c.kind}','like')">👍 <span class="n">会了</span></button>
-      <button onclick="feedAsk('${esc(c.key)}','${esc((c.title||c.who).replace(/'/g,''))}')">💬 <span class="n">提问</span></button>
+      <button onclick="feedAsk('${esc(c.key)}','${esc((c.head||per.n).replace(/'/g,''))}')">💬 <span class="n">提问</span></button>
       <button class="${r.later?'on':''}" onclick="feedAct(this,'${esc(c.key)}','${c.kind}','later')">🔖 <span class="n">收藏</span></button>
-      <button onclick="feedNope('${esc(c.key)}','${c.kind}')">🙈 <span class="n">刷过了</span></button>
+      <button onclick="feedNope('${esc(c.key)}','${c.kind}')">🙈 <span class="n">划走</span></button>
     </div></div>`;
 }
 /* 热搜榜:最近被提到/更新得最多的主题,纯粹为了好玩,但排序是真的 */
