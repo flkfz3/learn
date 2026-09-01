@@ -133,6 +133,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
     <button data-v="courses">课程</button>
     <button data-v="kb">知识库</button>
     <button data-v="terms">术语</button>
+    <button data-v="hw">作业</button>
     <button data-v="read">阅读</button>
     <button data-v="en">英语</button>
     <button data-v="qa">问答</button>
@@ -149,7 +150,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-08-29b';
+const BUILD='2026-09-01a';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -222,14 +223,15 @@ function show(logged){
 
 /* ---------- data ---------- */
 async function loadAll(){
-  const [kp,lec,qa,rq,sl,en]=await Promise.all([
+  const [kp,lec,qa,rq,sl,en,hw]=await Promise.all([
     sb.from('knowledge_points').select('*').order('updated_at',{ascending:false}).limit(1000),
     sb.from('lectures').select('*').order('lecture_date',{ascending:false}).limit(400),
     sb.from('qa_log').select('*').order('asked_at',{ascending:false}).limit(500),
     sb.from('reading_queue').select('*').order('priority').order('created_at',{ascending:false}).limit(300),
     sb.from('study_log').select('*').order('study_on',{ascending:false}).limit(400),
-    sb.from('english_log').select('*').order('asked_at',{ascending:false}).limit(1000)]);
-  D={kp:kp.data||[],lec:lec.data||[],qa:qa.data||[],rq:rq.data||[],sl:sl.data||[],en:en.data||[]};
+    sb.from('english_log').select('*').order('asked_at',{ascending:false}).limit(1000),
+    sb.from('homework').select('*').order('due_at',{ascending:false}).limit(200)]);
+  D={kp:kp.data||[],lec:lec.data||[],qa:qa.data||[],rq:rq.data||[],sl:sl.data||[],en:en.data||[],hw:hw.data||[]};
   COURSES={};
   D.lec.forEach(l=>{COURSES[l.course_code]=(l.extra&&l.extra.course_name)||l.course_code;});
   render();
@@ -241,10 +243,37 @@ document.getElementById('tabs').addEventListener('click',e=>{
 });
 function render(){
   const v=document.getElementById('view');
-  v.innerHTML=({today:rToday,courses:rCourses,kb:rKB,terms:rTerms,read:rRead,en:rEN,qa:rQA})[cur]();
+  v.innerHTML=({today:rToday,courses:rCourses,kb:rKB,terms:rTerms,hw:rHW,read:rRead,en:rEN,qa:rQA})[cur]();
   mathify(v);
 }
 const ORIGIN_ZH={meeting:'组会/会议',qe:'重点复习',course:'课程',paper:'论文',telegram:'随手记',window:'窗口问答',manual:'手动'};
+
+/* ---------- 作业 ---------- */
+function dueLabel(iso){
+  if(!iso)return '<span class="muted">无截止日期</span>';
+  const d=new Date(iso), now=new Date();
+  const txt=new Intl.DateTimeFormat('zh-CN',{timeZone:TZ,month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}).format(d);
+  const hrs=(d-now)/36e5;
+  if(hrs<0)   return `<span class="muted">已截止 · ${txt}</span>`;
+  if(hrs<48)  return `<b style="color:var(--accent)">${txt} 截止 · 剩 ${Math.floor(hrs)} 小时</b>`;
+  return `${txt} 截止 · 剩 ${Math.ceil(hrs/24)} 天`;
+}
+function rHW(){
+  const hs=D.hw||[];
+  if(!hs.length)return '<p class="muted">还没有作业记录。</p>';
+  return hs.map(h=>{
+    const btns=[];
+    if(h.spec_path)     btns.push(`<a class="srcbtn" href="javascript:void(0)" onclick="openPrivate('${esc(h.spec_path)}')">题面 🔒</a>`);
+    if(h.solution_path) btns.push(`<a class="srcbtn" href="javascript:void(0)" onclick="openPrivate('${esc(h.solution_path)}')">详细解答 🔒</a>`);
+    return `<div class="card">
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline">
+        <b>${esc(COURSES[h.course_code]||h.course_code)} · ${esc(h.title||('HW'+h.hw_no))}</b>
+        <span style="font-size:13px">${dueLabel(h.due_at)}</span></div>
+      <div style="margin:4px 0 6px">${esc(h.exercises||'')}</div>
+      ${h.solution_note?`<div class="muted" style="font-size:13px;margin-bottom:6px">${esc(h.solution_note)}</div>`:''}
+      <div>${btns.join(' ')}</div></div>`;
+  }).join('');
+}
 
 /* ---------- 今日 ---------- */
 function dayOf(ts){ if(!ts)return''; return new Intl.DateTimeFormat('en-CA',{timeZone:TZ}).format(new Date(ts)); }
