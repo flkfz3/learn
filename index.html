@@ -102,6 +102,9 @@ code,pre,kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"PingFang SC
 .wbfig{margin:10px 0;padding:20px 18px 16px;border-radius:8px;text-align:left;font-size:17px;
   background:#232b39;color:#eef2f8;line-height:1.9;overflow-x:auto}
 .wbfig .cap{display:block;margin-top:12px;font-size:12px;color:#c3cede}
+/* 缩到 11.5px 还放不下的超长公式:留横滑,并在右缘给一道渐隐提示它还有 */
+.wbfig.scrolls{background-image:linear-gradient(90deg,transparent calc(100% - 26px),rgba(35,43,57,.92))}
+.wbfig.scrolls .cap::after{content:' · 左右滑动看全';color:#8fa0b8}
 .wbfig .katex{color:#eef2f8}
 /* KaTeX 的块级公式自带 text-align:center,不覆盖的话外面写 left 是白写(第5轮审查 D) */
 .wbfig .katex-display{text-align:left;margin:0}
@@ -313,7 +316,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-02q';
+const BUILD='2026-09-02r';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -423,7 +426,7 @@ function render(){
   if(hdr) hdr.style.display = isFeed?'none':'';
   if(tabs)tabs.style.display= isFeed?'none':'flex';
   v.innerHTML=({feed:rFeed,today:rToday,courses:rCourses,kb:rKB,terms:rTerms,hw:rHW,read:rRead,en:rEN,qa:rQA})[cur]();
-  mathify(v); clipScan(v);
+  mathify(v); fitFig(v); clipScan(v);
 }
 const ORIGIN_ZH={meeting:'组会/会议',qe:'重点复习',course:'课程',paper:'论文',telegram:'随手记',window:'窗口问答',manual:'手动'};
 
@@ -762,6 +765,13 @@ function fakeN(id,salt,boost){
 }
 const AVBASE='https://kbcftsexzmxjtlljgcyi.supabase.co/storage/v1/object/public/coursenotes/oc/';
 /* 只有真被裁掉了才显示「展开全文」—— 三行的卡不该挂一个骗人的展开钮 */
+function fitFig(root){
+  (root||document).querySelectorAll('.wbfig').forEach(e=>{
+    e.style.fontSize='';
+    for(let px=17; px>=11.5 && e.scrollWidth>e.clientWidth+1; px-=0.75) e.style.fontSize=px+'px';
+    e.classList.toggle('scrolls', e.scrollWidth>e.clientWidth+1);
+  });
+}
 function clipScan(root){
   (root||document).querySelectorAll('.wbtext.clip').forEach(e=>{
     const btn=e.nextElementSibling;
@@ -878,7 +888,7 @@ function rephrase(slug,topic,key){
   const el=document.querySelector(`.wbpost[data-k="${key}"]`); if(!el)return;
   const c={key:'post:'+pick.id,kind:'post',post:pick,per:per(pick.author),at:pick.posted_at,
            quoted:pick.quote_of?(D.fp||[]).find(y=>y.id===pick.quote_of):null};
-  el.insertAdjacentHTML('afterend',ocard(c)); mathify(el.nextElementSibling); clipScan(el.parentElement);
+  el.insertAdjacentHTML('afterend',ocard(c)); mathify(el.nextElementSibling); fitFig(el.parentElement); clipScan(el.parentElement);
   markSeen([{key:c.key,kind:'post'}]);
 }
 function fcard(c){ return ocard(c); }
@@ -1000,7 +1010,7 @@ function feedObserve(){
     const more2=pickCards(feedBatch, shownKeys);
     if(!more2.length){ document.getElementById('feedmore').textContent='今天的池子见底了 —— 去别的页看看,或者明天再来'; feedIO.disconnect(); return; }
     list.insertAdjacentHTML('beforeend',more2.map(fcard).join(''));
-    mathify(list); clipScan(list);
+    mathify(list); fitFig(list); clipScan(list);
     markSeen(more2);
   },{rootMargin:'400px'});
   feedIO.observe(more);
