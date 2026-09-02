@@ -81,7 +81,7 @@ html[data-theme=dark] .wbav{background:linear-gradient(135deg,#4a3f7a,#6b5aa8);c
 .wbfrom{color:var(--wb-meta);font-size:12px;margin-top:2px}
 .wbfrom b{color:var(--wb-blue);font-weight:400}
 .wbtext{margin:7px 0 5px;font-size:15px;line-height:1.6;word-break:break-word;
-  line-break:strict;overflow-wrap:anywhere}
+  line-break:strict}   /* 不加 overflow-wrap:anywhere —— 它会把「关键」拆成「关」+「键」(第7轮审查 P1-4) */
 /* 收起状态按行数裁,不按字符数 —— 否则两行的卡被收起、八行的卡反而全展开(第6轮审查 4) */
 .wbtext.clip{display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
 .wbtext.clip p:last-child{margin-bottom:0}
@@ -90,8 +90,6 @@ html[data-theme=dark] .wbav{background:linear-gradient(135deg,#4a3f7a,#6b5aa8);c
 /* 正文里的块级公式也左对齐,不然同一张卡上下两个公式一个居中一个靠左 */
 .wbtext .katex-display{text-align:left;margin:.4em 0}
 .wbtext .katex{font-size:0.95em}
-.wbmoretxt{white-space:nowrap;color:#1a73e8;cursor:pointer;font-size:14px}
-.wbfull{display:none;margin-top:6px;background:var(--wb-bg);border-radius:4px;padding:8px 10px;font-size:14px}
 .wbtext p{margin:.3em 0}
 .wbtext .tt{font-weight:600}
 .wbtopic{color:var(--wb-blue)}
@@ -172,7 +170,7 @@ html[data-theme=dark] .wbchip{background:#3a2c1c;color:#ffb066}
 /* 评论区 */
 .wbcmt{border-top:1px solid var(--wb-line);margin-top:8px;padding-top:6px}
 .wbcmt .row{display:flex;gap:7px;padding:3px 0;font-size:13px;line-height:1.55}
-.wbcmt .ca{width:22px;height:22px;border-radius:50%;flex:none;display:flex;align-items:center;
+.wbcmt .ca{width:22px;height:22px;border-radius:50%;object-fit:cover;flex:none;display:flex;align-items:center;
   justify-content:center;font-size:11px;color:#fff;font-weight:700}
 .wbcmt .cn{color:var(--wb-blue)}
 /* 投票 */
@@ -181,6 +179,12 @@ html[data-theme=dark] .wbchip{background:#3a2c1c;color:#ffb066}
   background:var(--wb-card);color:var(--wb-txt);border-radius:3px;padding:6px 9px;margin:4px 0;
   cursor:pointer;font-size:13.5px}
 .wbpoll .opt:hover{border-color:var(--wb-org)}
+.wbpoll .pmeta{font-size:11.5px;color:var(--wb-meta);margin-top:6px}
+.wbpoll .opt{position:relative;overflow:hidden}
+.wbpoll .opt.voted::before{content:'';position:absolute;left:0;top:0;bottom:0;width:var(--p);
+  background:var(--wb-bg);z-index:0}
+.wbpoll .opt.voted>*{position:relative;z-index:1}
+.wbpoll .pct{float:right;font-size:12px;color:var(--wb-meta);position:relative;z-index:1}
 .wbpoll .opt.right{border-color:#2e7d32;color:#2e7d32;font-weight:600}
 .wbpoll .opt.wrong{border-color:#c62828;color:#c62828}
 .wbpoll .ex{font-size:13px;color:var(--wb-meta);margin-top:6px;display:none}
@@ -298,7 +302,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-02m';
+const BUILD='2026-09-02n';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -729,7 +733,7 @@ function feedAgo(at){
    不是任何真实数据 —— 但没有它 feed 会显得"里面没有人"。 */
 /* 三个数要有真实的比例和量级差:赞 ≈ 10× 转发,评论 ≈ 2-3× 转发,冷门帖就该只有几个赞。
    原来三个数挤在同一个窄区间、还都是三位数,一眼假(第5轮审查 E)。salt 1=转发 2=评论 3=赞。 */
-function fakeN(id,salt){
+function fakeN(id,salt,boost){
   let h=0; for(let i=0;i<id.length;i++) h=(h*33+id.charCodeAt(i))|0;
   h=Math.abs(h);
   const base=[1,2,3,5,8,13,21,34][h%8]+(h>>3)%5;
@@ -738,7 +742,8 @@ function fakeN(id,salt){
   const n=salt===1?base
         :salt===2?Math.round(base*(2+(h>>7)%2)*jit(2))
         :Math.round(base*(8+(h>>11)%9)*jit(3));
-  return n<3?'':String(n);
+  const v=Math.round(n*(boost||1));
+  return v<3?'':String(v);
 }
 const AVBASE='https://kbcftsexzmxjtlljgcyi.supabase.co/storage/v1/object/public/coursenotes/oc/';
 /* 只有真被裁掉了才显示「展开全文」—— 三行的卡不该挂一个骗人的展开钮 */
@@ -767,7 +772,9 @@ function wbAvatarText(pk,size){
 function wbComments(list){
   if(!list||!list.length)return '';
   return `<div class="wbcmt">`+list.map(x=>{const q=per(x.author);
-    return `<div class="row"><div class="ca" style="background:${q.c}">${esc(q.av)}</div>
+    return `<div class="row">${q.img?`<img class="ca" src="${AVBASE}${q.img}" alt=""
+        onerror="this.outerHTML='<div class=ca style=background:${q.c}>${esc(q.av)}</div>'">`
+       :`<div class="ca" style="background:${q.c}">${esc(q.av)}</div>`}
       <div><span class="cn">${esc(q.n)}</span>：${md(x.text).replace(/^<p>|<\/p>$/g,'')}</div></div>`;
   }).join('')+`</div>`;
 }
@@ -775,13 +782,29 @@ function wbPoll(id,poll){
   if(!poll)return '';
   const opts=(poll.options||[]).map((o,i)=>
     `<button class="opt" data-i="${i}" onclick="votePoll('${id}',${i},${poll.answer})">${esc(o)}</button>`).join('');
-  return `<div class="wbpoll" id="poll-${id}"><div style="margin-bottom:4px">${esc(poll.q||'')}</div>
-     ${opts}<div class="ex">${md(poll.explain_md||'')}</div></div>`;
+  const votes=(poll.options||[]).map((_,i)=>fakeVote(id,i));
+  const tot=votes.reduce((a,b)=>a+b,0);
+  return `<div class="wbpoll" id="poll-${id}" data-v="${votes.join(',')}">
+     <div style="margin-bottom:6px">${esc(poll.q||'')}</div>
+     ${opts}<div class="pmeta">${tot} 人参与 · 选完看解析</div>
+     <div class="ex">${md(poll.explain_md||'')}</div></div>`;
+}
+/* 票数和转发/赞的计数同性质:由 id 稳定生成的仿真数字,不是真实数据。
+   没有它投票卡就只是四个空框,一眼看出不是投票(第7轮审查 P1-5)。 */
+function fakeVote(id,i){
+  let h=i*7+3; for(let k=0;k<id.length;k++) h=(h*31+id.charCodeAt(k))|0;
+  return 3+Math.abs(h)%140;
 }
 function votePoll(id,i,ans){
   const box=document.getElementById('poll-'+id); if(!box)return;
+  const vs=(box.dataset.v||'').split(',').map(Number);
+  const tot=vs.reduce((a,b)=>a+b,0)+1;
   box.querySelectorAll('.opt').forEach((b,j)=>{
     b.classList.add(j===ans?'right':(j===i?'wrong':''));
+    const pct=Math.round((vs[j]+(j===i?1:0))/tot*100);
+    b.style.setProperty('--p',pct+'%');
+    b.classList.add('voted');
+    b.insertAdjacentHTML('beforeend',`<span class="pct">${pct}%</span>`);
     b.onclick=null;
   });
   box.querySelector('.ex').style.display='block';
@@ -796,28 +819,31 @@ function ocMenu(key){
 }
 function ocard(c){
   const x=c.post, q=per(x.author), r=feKey(c.key);
+  // 最用力的那张卡(公式卡+评论区)互动数却是全场最低,看着假(第7轮审查 P2-9)
+  const boost=1+(x.figure?0.8:0)+((x.seed_comments||[]).length?0.5:0)+(x.poll?0.4:0);
   const rep = c.quoted ? `<div class="wbrep"><span class="who">@${esc(per(c.quoted.author).n)}</span>：
       ${md(c.quoted.body_md).replace(/^<p>|<\/p>$/g,'')}</div>` : '';
-  // 全文:微博是正文末尾一个内联小链接,不是整行灰底折叠面板
-  const full = x.full_md ? `<span class="wbmoretxt" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">…展开</span>
-      <div class="wbfull">${md(x.full_md)}</div>` : '';
+  // 展开只留一个控件。原来行内「…展开」(管 full_md)和整行「展开全文」(管行数)并存,
+  // 同一个流里两种截断语义、两种省略号(第7轮审查 P1-2)。现在 full_md 直接接在正文后面,
+  // 一起交给按行数裁切的 .clip 管。
+  const full = x.full_md ? md(x.full_md) : '';
   return `<div class="wbpost" data-k="${esc(c.key)}">
     <span class="wbmore" onclick="ocMenu('${esc(c.key)}')" title="更多">⌄</span>
     <div class="wbtop">${wbAvatar(x.author)}
       <div style="flex:1;min-width:0">
         <div class="wbname">${esc(q.n)}${q.v?'<span class="wbbadge">V</span>':''}</div>
-        <div class="wbfrom">${feedAgo(x.posted_at)} · 来自 <b>${esc(q.dev)}</b>${x.hot?'<span class="wbchip">热</span>':''}</div>
+        <div class="wbfrom">${feedAgo(x.posted_at)} · 来自 <b>${esc(q.dev)}</b>${(x.hot && (Date.now()-new Date(x.posted_at||0))<2.6e8)?'<span class="wbchip">热</span>':''}</div>
       </div></div>
-    <div class="wbtext clip">${md(x.body_md).replace(/<\/p>\s*$/,(x.full_md?'':'</p>'))}${full}${x.full_md?'</p>':''}</div>
+    <div class="wbtext clip">${md(x.body_md)}${full}</div>
     <div class="wbmore2" onclick="unclip(this)">展开全文</div>
     ${x.figure?`<div class="wbfig">${md(figTex(x.figure.tex))}<span class="cap">${esc(x.figure.cap||'')}</span></div>`:''}
     ${c.due?`<div class="wbfrom" style="margin-top:2px">${dueLabel(c.due)}</div>`:''}
     ${rep}${wbPoll(x.id,x.poll)}
     ${wbComments(x.seed_comments)}
     <div class="wbicons">
-      <button onclick="rephrase('${esc(x.kp_slug||'')}','${esc(x.topic||'')}','${esc(c.key)}')"><svg viewBox='0 0 24 24'><path d='M4 9.5A3.5 3.5 0 0 1 7.5 6H18'/><path d='M15.5 3.5 18.5 6l-3 2.5'/><path d='M20 14.5a3.5 3.5 0 0 1-3.5 3.5H6'/><path d='M8.5 20.5 5.5 18l3-2.5'/></svg><span class="wbcount">${fakeN(x.id,1)||'转发'}</span></button>
-      <button onclick="feedAsk('${esc(c.key)}','${esc((x.body_md||'').slice(0,40).replace(/['\n]/g,' '))}')"><svg viewBox='0 0 24 24'><path d='M20.5 11.7c0 3.9-3.8 7-8.5 7-1 0-2-.15-2.9-.42L4 20l1.5-3.4C4.2 15.3 3.5 13.6 3.5 11.7c0-3.87 3.8-7 8.5-7s8.5 3.13 8.5 7Z'/></svg><span class="wbcount">${fakeN(x.id,2)||'评论'}</span></button>
-      <button class="${r.liked?'on':''}" onclick="feedAct(this,'${esc(c.key)}','post','like')"><svg viewBox='0 0 24 24'><path d='M7 21V10.5l4.2-7a1.9 1.9 0 0 1 3.4 1.7L13.3 9.5H19a2 2 0 0 1 2 2.35l-1.3 6.8A2.6 2.6 0 0 1 17.1 21Z'/><rect x='3' y='10.5' width='4' height='10.5' rx='1'/></svg><span class="wbcount">${fakeN(x.id,3)||'赞'}</span></button>
+      <button onclick="rephrase('${esc(x.kp_slug||'')}','${esc(x.topic||'')}','${esc(c.key)}')"><svg viewBox='0 0 24 24'><path d='M4 9.5A3.5 3.5 0 0 1 7.5 6H18'/><path d='M15.5 3.5 18.5 6l-3 2.5'/><path d='M20 14.5a3.5 3.5 0 0 1-3.5 3.5H6'/><path d='M8.5 20.5 5.5 18l3-2.5'/></svg><span class="wbcount">${fakeN(x.id,1,boost)||'转发'}</span></button>
+      <button onclick="feedAsk('${esc(c.key)}','${esc((x.body_md||'').slice(0,40).replace(/['\n]/g,' '))}')"><svg viewBox='0 0 24 24'><path d='M20.5 11.7c0 3.9-3.8 7-8.5 7-1 0-2-.15-2.9-.42L4 20l1.5-3.4C4.2 15.3 3.5 13.6 3.5 11.7c0-3.87 3.8-7 8.5-7s8.5 3.13 8.5 7Z'/></svg><span class="wbcount">${fakeN(x.id,2,boost)||'评论'}</span></button>
+      <button class="${r.liked?'on':''}" onclick="feedAct(this,'${esc(c.key)}','post','like')"><svg viewBox='0 0 24 24'><path d='M7 21V10.5l4.2-7a1.9 1.9 0 0 1 3.4 1.7L13.3 9.5H19a2 2 0 0 1 2 2.35l-1.3 6.8A2.6 2.6 0 0 1 17.1 21Z'/><rect x='3' y='10.5' width='4' height='10.5' rx='1'/></svg><span class="wbcount">${fakeN(x.id,3,boost)||'赞'}</span></button>
     </div></div>`;
 }
 /* 换个讲法:立刻在下面插一条同主题、不同账号的帖 */
@@ -867,7 +893,7 @@ function rFeed(){
   const nav=WBGROUPS.map(([g,n])=>`<a class="${feedGroup===g?'on':''}" onclick="setGroup('${g}')">${n}<span class="c">${groupCount(g)}</span></a>`).join('');
   return `<div class="wb">
     <div class="wbbar">
-      <div class="me">我</div>
+      <div class="me" title="我">我</div>
       <div class="tabs"><span class="${feedSort==='fol'?'on':''}" onclick="setSort('fol')">关注</span>
         <span class="${feedSort==='rec'?'on':''}" onclick="setSort('rec')">推荐</span></div>
       <button class="ic" onclick="reshuffle()" title="换一批"><svg viewBox="0 0 24 24" width="19" height="19"
@@ -983,7 +1009,7 @@ function dueLabel(iso){
   const hrs=(d-now)/36e5;
   if(hrs<0)   return `<span class="muted">已截止 · ${txt}</span>`;
   if(hrs<48)  return `<b style="color:var(--accent)">${txt} 截止 · 剩 ${Math.floor(hrs)} 小时</b>`;
-  return `${txt} 截止 · 剩 ${Math.ceil(hrs/24)} 天`;
+  return `${txt} 截止 · 剩 ${Math.max(1,Math.floor(hrs/24))} 天`;
 }
 function rHW(){
   const hs=D.hw||[];
