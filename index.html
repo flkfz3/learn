@@ -203,6 +203,11 @@ html[data-theme=dark] .wbchip{background:#3a2c1c;color:#ffb066}
 .wbcmt.all .row.more{display:flex}
 .wbcmt .owner{background:#fff1e2;color:#b8541a;font-size:10px;border-radius:3px;
   padding:0 3px;margin-left:4px;vertical-align:1px}
+.wbpost.cont{border-top:0;padding-top:2px}
+.wbcont{color:var(--wb-meta);font-size:12px;padding:2px 0 4px}
+.wbpost.folded{display:none}
+.wbrun{background:var(--wb-card);border-top:1px solid var(--wb-line);padding:10px 14px;
+  color:var(--wb-blue);font-size:13.5px;cursor:pointer}
 .wbcmt .ca.ghost{background:none;border:0}   /* 同一个人接着说,不重复头像和名字 */
 .wbcmt .row.cont{padding-top:0}
 /* 引用块里的公式跟正文结论式一样重,一张卡上两条同等份量的公式认不出哪条是本帖的结论 */
@@ -342,7 +347,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-03m';
+const BUILD='2026-09-03n';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -461,7 +466,7 @@ function render(){
   if(hdr) hdr.style.display = isFeed?'none':'';
   if(tabs)tabs.style.display= isFeed?'none':'flex';
   v.innerHTML=({feed:rFeed,today:rToday,courses:rCourses,kb:rKB,terms:rTerms,hw:rHW,read:rRead,en:rEN,qa:rQA})[cur]();
-  mathify(v); fitFig(v); clipScan(v);
+  mathify(v); fitFig(v); clipScan(v); runScan(v);
 }
 const ORIGIN_ZH={meeting:'组会/会议',qe:'重点复习',course:'课程',paper:'论文',telegram:'随手记',window:'窗口问答',manual:'手动'};
 
@@ -776,8 +781,15 @@ function pickCards(n, exclude){
   hotSeen=0; hotIdx=0;
   const src=feedSrc().filter(c=>!exclude.has(c.key));
   if(feedSort==='fol'){
-    return src.filter(c=>c.kind==='post'&&c.post&&!c.post.auto)
-              .sort((a,b)=>new Date(b.at||0)-new Date(a.at||0)).slice(0,n);
+    const line=src.filter(c=>c.kind==='post'&&c.post&&!c.post.auto)
+                  .sort((a,b)=>new Date(b.at||0)-new Date(a.at||0)).slice(0,n);
+    let run=0;
+    return line.map((c,i)=>{
+      const same = i>0 && line[i-1].post.author===c.post.author;
+      run = same ? run+1 : 0;
+      // cont: 接着上一条的同一个人(不重复头像名字);folded: 连发第 3 条起,先收起来
+      return Object.assign({}, c, {cont:same, folded:run>=2});
+    });
   }
   const pool=src.map(c=>({c,w:feedWeight(c)})).sort((a,b)=>b.w-a.w);
   /* 两条硬约束，权重只在满足约束的候选里挑最高的：
@@ -858,6 +870,24 @@ function fitFig(root){
     e.style.fontSize='';
     for(let px=105; px>=62 && e.scrollWidth>e.clientWidth+1; px-=4) e.style.fontSize=px+'%';
   });
+}
+/* 关注流里连发第 3 条起是 .folded(默认不显示),在每一串的开头插一个「连发 N 条」的入口。 */
+function runScan(root){
+  const R=root||document;
+  R.querySelectorAll('.wbrun').forEach(e=>e.remove());
+  const cards=[...R.querySelectorAll('.wbpost')];
+  for(let i=0;i<cards.length;i++){
+    if(!cards[i].classList.contains('folded'))continue;
+    let j=i; while(j<cards.length && cards[j].classList.contains('folded')) j++;
+    const nm=(cards[i].querySelector('.wbname')||{}).textContent
+             || (cards[i-1]&&(cards[i-1].querySelector('.wbname')||{}).textContent) || '这个账号';
+    const btn=document.createElement('div');
+    btn.className='wbrun';
+    btn.textContent=`${nm.replace('V','')} 连发 ${j-i+2} 条 · 展开剩下 ${j-i} 条`;
+    btn.onclick=()=>{ for(let k=i;k<j;k++) cards[k].classList.remove('folded'); btn.remove(); };
+    cards[i].parentNode.insertBefore(btn, cards[i]);
+    i=j-1;
+  }
 }
 function clipScan(root){
   (root||document).querySelectorAll('.wbtext.clip').forEach(e=>{
@@ -978,13 +1008,14 @@ function ocard(c){
   // 同一个流里两种截断语义、两种省略号(第7轮审查 P1-2)。现在 full_md 直接接在正文后面，
   // 一起交给按行数裁切的 .clip 管。
   const full = x.full_md ? md(x.full_md) : '';
-  return `<div class="wbpost" data-k="${esc(c.key)}">
+  return `<div class="wbpost${c.cont?' cont':''}${c.folded?' folded':''}" data-k="${esc(c.key)}">
     <span class="wbmore" onclick="ocMenu('${esc(c.key)}')" title="更多">⌄</span>
-    <div class="wbtop">${wbAvatar(x.author)}
+    ${c.cont ? `<div class="wbcont">${feedAgo(x.posted_at)} · 同一账号继续</div>`
+    : `<div class="wbtop">${wbAvatar(x.author)}
       <div style="flex:1;min-width:0">
         <div class="wbname">${esc(q.n)}${q.v?'<span class="wbbadge">V</span>':''}</div>
         <div class="wbfrom">${feedAgo(x.posted_at)} · 来自 <b>${esc(q.dev)}</b>${hotChip(x.hot)}</div>
-      </div></div>
+      </div></div>`}
     <div class="wbtext clip">${md(x.body_md)}${full}</div>
     <div class="wbmore2" onclick="unclip(this)">展开全文</div>
     ${x.figure?`<div class="wbfig">${md(figTex(x.figure.tex))}<span class="cap">${esc(x.figure.cap||'')}</span></div>`:''}
@@ -1127,7 +1158,7 @@ function feedObserve(){
     const more2=pickCards(feedBatch, shownKeys);
     if(!more2.length){ document.getElementById('feedmore').textContent='今天的池子见底了 —— 去别的页看看，或者明天再来'; feedIO.disconnect(); return; }
     list.insertAdjacentHTML('beforeend',more2.map(fcard).join(''));
-    mathify(list); fitFig(list); clipScan(list);
+    mathify(list); fitFig(list); clipScan(list); runScan(list);
     markSeen(more2);
   },{rootMargin:'400px'});
   feedIO.observe(more);
