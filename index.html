@@ -50,7 +50,7 @@ header .sp{flex:1}
 html[data-theme=dark]{ --wb-org:#ff9a33; --wb-name:#ff9f7a; --wb-meta:#8f8caa;
        --wb-bg:#15132e; --wb-card:#1d1b38; --wb-line:#2c2a52; --wb-txt:#e8e6f7; --wb-blue:#6fb0ef; }
 
-.wb{background:var(--wb-bg);margin:-4px -14px 0;padding:10px 12px 40px;color:var(--wb-txt);
+.wb{background:var(--wb-bg);margin:-16px -14px 0;padding:0 12px 40px;color:var(--wb-txt);
     font-size:14px;line-height:1.6}
 .wbgrid{display:grid;grid-template-columns:150px minmax(0,1fr) 250px;gap:12px;
     max-width:1180px;margin:0 auto;align-items:start}
@@ -65,17 +65,21 @@ html[data-theme=dark]{ --wb-org:#ff9a33; --wb-name:#ff9f7a; --wb-meta:#8f8caa;
 .wbnav a.on{color:var(--wb-org);font-weight:600}
 .wbnav a .c{float:right;color:var(--wb-meta);font-size:12px;font-weight:400}
 .wbpost{background:var(--wb-card);border:1px solid var(--wb-line);border-radius:6px;
-    padding:12px 14px 0;margin-bottom:10px}
+    padding:11px 13px 0;margin-bottom:8px}
 .wbtop{display:flex;gap:10px}
+/* 纯平色圆像企业微信默认头像,加一层渐变才有点真实感 */
 .wbav{width:44px;height:44px;border-radius:50%;flex:none;display:flex;align-items:center;
     justify-content:center;font-size:19px;background:linear-gradient(135deg,#ffd9b0,#ffb066);
     color:#7a4a12;font-weight:700;border:1px solid var(--wb-line)}
 html[data-theme=dark] .wbav{background:linear-gradient(135deg,#4a3f7a,#6b5aa8);color:#ffe6c9}
-.wbname{color:var(--wb-name);font-size:14px;font-weight:600;display:flex;align-items:center;gap:4px}
+.wbname{color:var(--wb-txt);font-size:14.5px;font-weight:600;display:flex;align-items:center;gap:4px}
 .wbbadge{font-size:10px;background:var(--wb-org);color:#fff;border-radius:3px;padding:0 3px;line-height:14px}
 .wbfrom{color:var(--wb-meta);font-size:12px;margin-top:2px}
 .wbfrom b{color:var(--wb-blue);font-weight:400}
-.wbtext{margin:8px 0 6px;font-size:14.5px;line-height:1.72;word-break:break-word}
+.wbtext{margin:7px 0 5px;font-size:15px;line-height:1.6;word-break:break-word}
+.wbtext .katex{font-size:0.95em}
+.wbmoretxt{color:var(--wb-blue);cursor:pointer}
+.wbfull{display:none;margin-top:6px;background:var(--wb-bg);border-radius:4px;padding:8px 10px;font-size:14px}
 .wbtext p{margin:.3em 0}
 .wbtext .tt{font-weight:600}
 .wbtopic{color:var(--wb-blue)}
@@ -115,17 +119,19 @@ html[data-theme=dark] .wbchip{background:#3a2c1c;color:#ffb066}
 .wbbar .me{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#ffd9b0,#ffb066);
   display:flex;align-items:center;justify-content:center;font-size:13px;color:#7a4a12;font-weight:700}
 .wbbar .tabs{flex:1;display:flex;gap:18px;justify-content:center}
-.wbbar .tabs span{font-size:17px;color:var(--wb-meta);cursor:pointer;padding-bottom:3px}
+.wbbar .tabs span{font-size:16px;color:var(--wb-meta);cursor:pointer;padding-bottom:3px}
 .wbbar .tabs span.on{color:var(--wb-txt);font-weight:700;border-bottom:3px solid #ff5a5f}
 .wbbar .ic{font-size:17px;color:var(--wb-txt);cursor:pointer;background:none;border:0}
 .wbtabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--wb-card);
   border-top:1px solid var(--wb-line);display:flex;padding:6px 0 8px}
 .wbtabbar button{flex:1;border:0;background:none;color:var(--wb-meta);font-size:11px;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;gap:2px}
-.wbtabbar button b{font-size:18px;font-weight:400;line-height:1}
+.wbtabbar button b{font-size:19px;font-weight:400;line-height:1}
+.wbtabbar .plus{background:var(--wb-org);color:#fff;width:34px;height:34px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:22px;line-height:1}
 .wbtabbar button.on{color:var(--wb-org)}
 @media(min-width:1001px){ .wbtabbar{display:none} .wbbar{margin-bottom:12px} }
-@media(max-width:1000px){ .wb{padding-bottom:70px} }
+@media(max-width:1000px){ .wb{padding-bottom:96px} }   /* 底部 tab bar 会压住最后一行 */
 /* 微博手机版的动作条是四个图标,不是三个文字按钮 */
 .wbicons{display:flex;border-top:1px solid var(--wb-line);margin-top:8px}
 .wbicons button{flex:1;border:0;background:none;color:var(--wb-meta);font-size:13px;padding:10px 0;
@@ -154,7 +160,7 @@ html[data-theme=dark] .wbchip{background:#3a2c1c;color:#ffb066}
 .wbpoll .opt.right{border-color:#2e7d32;color:#2e7d32;font-weight:600}
 .wbpoll .opt.wrong{border-color:#c62828;color:#c62828}
 .wbpoll .ex{font-size:13px;color:var(--wb-meta);margin-top:6px;display:none}
-.wbverify{font-size:11.5px;color:var(--wb-org);margin-left:4px}
+.wbcount{font-size:12px;color:var(--wb-meta);margin-left:3px}
 
 
 nav{display:flex;gap:4px;border-bottom:1.5px solid var(--line);margin:4px 0 16px;overflow-x:auto;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent)}
@@ -266,7 +272,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-02b';
+const BUILD='2026-09-02c';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -626,10 +632,18 @@ function feedAgo(at){
   if(d<43200)return Math.floor(d/1440)+'天前';
   return new Intl.DateTimeFormat('zh-CN',{timeZone:TZ,month:'numeric',day:'numeric'}).format(new Date(at));
 }
+/* 转发/评论/赞的计数:由帖子 id 稳定生成。这是仿真的一部分(和人设的粉丝数同性质),
+   不是任何真实数据 —— 但没有它 feed 会显得"里面没有人"。 */
+function fakeN(id,salt){
+  let h=salt; for(let i=0;i<id.length;i++) h=(h*33+id.charCodeAt(i))|0;
+  h=Math.abs(h)%997;
+  return h<3?'':(h<300?h:(h<800?Math.floor(h/7):(Math.floor(h/97)+'万')));
+}
 function wbAvatar(pk,size){
   const q=per(pk); const s=size||44;
-  return `<div class="wbav" style="width:${s}px;height:${s}px;background:${q.c};color:#fff;
-     font-size:${Math.round(s*0.4)}px;border:0">${esc(q.av)}</div>`;
+  return `<div class="wbav" style="width:${s}px;height:${s}px;color:#fff;border:0;
+     background:radial-gradient(circle at 30% 25%, ${q.c}dd, ${q.c} 45%, ${q.c}99);
+     font-size:${Math.round(s*0.38)}px;text-shadow:0 1px 2px rgba(0,0,0,.25)">${esc(q.av)}</div>`;
 }
 function wbComments(list){
   if(!list||!list.length)return '';
@@ -659,25 +673,24 @@ function ocard(c){
   const x=c.post, q=per(x.author), r=feKey(c.key);
   const rep = c.quoted ? `<div class="wbrep"><span class="who">@${esc(per(c.quoted.author).n)}</span>：
       ${md(c.quoted.body_md).replace(/^<p>|<\/p>$/g,'')}</div>` : '';
-  const full = x.full_md ? `<details class="wbquiz"><summary>全文</summary>
-      <div style="margin-top:6px">${md(x.full_md)}</div></details>` : '';
-  const kplink = x.kp_slug ? `<span class="wblink" onclick="openKPslug('${esc(x.kp_slug)}')">进主页</span>` : '';
+  // 全文:微博是正文末尾一个内联小链接,不是整行灰底折叠面板
+  const full = x.full_md ? `<span class="wbmoretxt" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">展开全文</span>
+      <div class="wbfull">${md(x.full_md)}</div>` : '';
   return `<div class="wbpost" data-k="${esc(c.key)}">
     <span class="wbmore" onclick="feedNope('${esc(c.key)}','post')" title="不想看这条">⌄</span>
     <div class="wbtop">${wbAvatar(x.author)}
       <div style="flex:1;min-width:0">
-        <div class="wbname">${esc(q.n)}${q.v?`<span class="wbverify">✔ ${esc(q.v)}</span>`:''}</div>
-        <div class="wbfrom">${feedAgo(x.posted_at)} · 来自 <b>${esc(q.dev)}</b>${x.hot?'<span class="wbchip">🔥</span>':''}</div>
+        <div class="wbname">${esc(q.n)}${q.v?'<span class="wbbadge">V</span>':''}</div>
+        <div class="wbfrom">${feedAgo(x.posted_at)} · 来自 <b>${esc(q.dev)}</b>${x.hot?'<span class="wbchip">热</span>':''}</div>
       </div></div>
     <div class="wbtext">${md(x.body_md)}</div>
-    ${rep}${wbPoll(x.id,x.poll)}${full}
-    ${kplink?`<div style="margin:4px 0 2px">${kplink}</div>`:''}
+    ${full}${rep}${wbPoll(x.id,x.poll)}
     ${wbComments(x.seed_comments)}
     <div class="wbicons">
-      <button class="${r.liked?'on':''}" onclick="feedAct(this,'${esc(c.key)}','post','like')">👍 <span class="n">懂了</span></button>
-      <button onclick="feedAsk('${esc(c.key)}','${esc((x.body_md||'').slice(0,40).replace(/['\n]/g,' '))}')">💬 <span class="n">追问</span></button>
-      <button onclick="rephrase('${esc(x.kp_slug||'')}','${esc(x.topic||'')}','${esc(c.key)}')">🔁 <span class="n">换个讲法</span></button>
-      <button class="${r.later?'on':''}" onclick="feedAct(this,'${esc(c.key)}','post','later')">🔖 <span class="n">收藏</span></button>
+      <button onclick="rephrase('${esc(x.kp_slug||'')}','${esc(x.topic||'')}','${esc(c.key)}')">🔁 <span class="wbcount">${fakeN(x.id,1)}</span></button>
+      <button onclick="feedAsk('${esc(c.key)}','${esc((x.body_md||'').slice(0,40).replace(/['\n]/g,' '))}')">💬 <span class="wbcount">${fakeN(x.id,2)}</span></button>
+      <button class="${r.liked?'on':''}" onclick="feedAct(this,'${esc(c.key)}','post','like')">👍 <span class="wbcount">${fakeN(x.id,3)+(r.liked?1:0)}</span></button>
+      <button class="${r.later?'on':''}" onclick="feedAct(this,'${esc(c.key)}','post','later')">🔖 <span class="wbcount">${r.later?'已收藏':''}</span></button>
     </div></div>`;
 }
 /* 换个讲法:立刻在下面插一条同主题、不同账号的帖 */
@@ -767,17 +780,15 @@ function rFeed(){
     <div class="wbbar">
       <div class="me">我</div>
       <div class="tabs"><span class="on">关注</span><span onclick="reshuffle()">推荐</span></div>
-      <button class="ic" onclick="reshuffle()" title="换一批">⟳</button>
-      <button class="ic" onclick="wbCompose()" title="记一条">✎</button>
-      <button class="ic" style="font-size:13px;border:1px solid var(--wb-line);border-radius:14px;padding:3px 10px"
-              onclick="goTab('today')">学习台</button>
+      <button class="ic" onclick="reshuffle()" title="换一批">⌕</button>
     </div>
     <div class="wbgrid">
       <div class="wbside"><div class="wbbox wbnav"><h4>首页</h4>${nav}</div></div>
       <div>
-        <div class="wbbox wbcompose">
-          <textarea id="wbc" rows="2" placeholder="有什么新学到的?"></textarea>
-          <button class="wbsend" onclick="wbSend()">发布</button><div style="clear:both"></div>
+        <div class="wbstat" style="margin-bottom:8px">
+          <span>今天刷了 <b>${seenToday}</b> 条</span><span>连着 <b>${streak}</b> 天</span>
+          <span>标会了 <b>${liked}</b></span><span style="flex:1"></span>
+          <button class="iconbtn" style="padding:2px 9px;font-size:12px" onclick="reshuffle()">换一换</button>
         </div>
         <div id="feedlist">${first.map(fcard).join('')}</div>
         <div class="wbend" id="feedmore">正在加载…</div>
@@ -794,21 +805,26 @@ function rFeed(){
     </div>
     <div class="wbtabbar">
       <button class="on"><b>⌂</b>首页</button>
-      <button onclick="goTab('kb')"><b>◎</b>知识库</button>
-      <button onclick="goTab('hw')"><b>♪</b>作业</button>
-      <button onclick="goTab('today')"><b>☰</b>学习台</button>
+      <button onclick="goTab('kb')"><b>◍</b>发现</button>
+      <button onclick="wbCompose()"><span class="plus">＋</span></button>
+      <button onclick="goTab('hw')"><b>✉</b>消息${dueSoon()?'<span style="color:#e8543f">•</span>':''}</button>
+      <button onclick="goTab('today')"><b>☺</b>我</button>
     </div></div>`;
 }
 function goTab(v){
   const b=[...document.querySelectorAll('#tabs button')].find(x=>x.dataset.v===v);
   if(b)b.click();
 }
-function wbCompose(){ const t=document.getElementById('wbc'); if(t){t.focus();window.scrollTo({top:0,behavior:'smooth'});} }
+function dueSoon(){ return (D.hw||[]).some(h=>h.due_at && (new Date(h.due_at)-Date.now())/36e5 < 96 && new Date(h.due_at)>new Date()); }
+function wbCompose(){
+  openOv(`<h3>记一条</h3><textarea id="wbc" rows="4" placeholder="有什么新学到的?"></textarea>
+    <button class="btn" onclick="wbSend()">发布</button>`);
+}
 async function wbSend(){
   const t=document.getElementById('wbc'), v=(t.value||'').trim(); if(!v)return;
   const {error}=await sb.from('study_log').insert({takeaway:v,category:'刷',source:'web',study_on:todayStr()});
   if(error)return toast('没存上: '+error.message);
-  t.value=''; toast('发出去了'); loadAll();
+  closeOv(); toast('发出去了'); loadAll();
 }
 async function feedNope(key,kind){
   const r=feKey(key); r.seen+=6;
