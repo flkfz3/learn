@@ -199,8 +199,13 @@ html[data-theme=dark] .wbchip{background:#3a2c1c;color:#ffb066}
 .wbcmt .cmore{color:var(--wb-blue);font-size:13px;cursor:pointer;padding:4px 0 1px}
 .wbcmt .row.more{display:none}
 .wbcmt.all .row.more{display:flex}
-.wbcmt .owner{background:#fff1e2;color:#d2691e;font-size:10px;border-radius:3px;
+.wbcmt .owner{background:#fff1e2;color:#b8541a;font-size:10px;border-radius:3px;
   padding:0 3px;margin-left:4px;vertical-align:1px}
+.wbcmt .ca.ghost{background:none;border:0}   /* 同一个人接着说,不重复头像和名字 */
+.wbcmt .row.cont{padding-top:0}
+/* 引用块里的公式跟正文结论式一样重,一张卡上两条同等份量的公式认不出哪条是本帖的结论 */
+.wbrep .katex-display{font-size:.88em;margin:.3em 0}
+.wbrep .katex{font-size:.95em}
 html[data-theme=dark] .wbcmt .owner{background:#3a2a1a;color:#e8a562}
 /* 投票 */
 .wbpoll{border:1px solid var(--wb-line);border-radius:4px;padding:8px 10px;margin:6px 0}
@@ -335,7 +340,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-03e';
+const BUILD='2026-09-03f';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -876,10 +881,12 @@ function wbAvatarText(pk,size){
 function wbComments(list,key,owner){
   if(!list||!list.length)return '';
   const row=(x,i)=>{const q=per(x.author); const mine=owner&&x.author===owner;
-    return `<div class="row${i>=3?' more':''}">${q.img?`<img class="ca" src="${AVBASE}${q.img}" alt=""
+    const cont = i>0 && list[i-1].author===x.author;   // 接着上一条的同一个人
+    return `<div class="row${i>=3?' more':''}${cont?' cont':''}">${cont?'<span class="ca ghost"></span>'
+       :(q.img?`<img class="ca" src="${AVBASE}${q.img}" alt=""
         onerror="this.outerHTML='<div class=ca style=background:${q.c}>${esc(q.av)}</div>'">`
-       :`<div class="ca" style="background:${q.c}">${esc(q.av)}</div>`}
-      <div><span class="cn">${esc(q.n)}</span>${mine?'<span class="owner">博主</span>':''}：${md(x.text).replace(/^<p>|<\/p>$/g,'')}</div></div>`;};
+       :`<div class="ca" style="background:${q.c}">${esc(q.av)}</div>`)}
+      <div>${cont?'':`<span class="cn">${esc(q.n)}</span>${mine?'<span class="owner">博主</span>':''}：`}${md(x.text).replace(/^<p>|<\/p>$/g,'')}</div></div>`;};
   const hid=list.length-3;
   return `<div class="wbcmt">`+list.map(row).join('')
     +(hid>0?`<div class="cmore" onclick="this.parentElement.classList.add('all');this.remove()">展开剩余 ${hid} 条</div>`:'')
