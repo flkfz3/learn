@@ -82,7 +82,7 @@ html[data-theme=dark] .wbav{background:linear-gradient(135deg,#4a3f7a,#6b5aa8);c
 .wbfrom b{color:var(--wb-blue);font-weight:400}
 .wbtext{margin:7px 0 5px;font-size:15px;line-height:1.6;word-break:break-word}
 .wbtext .katex{font-size:0.95em}
-.wbmoretxt{color:#1a73e8;cursor:pointer;font-size:14px}
+.wbmoretxt{white-space:nowrap;color:#1a73e8;cursor:pointer;font-size:14px}
 .wbfull{display:none;margin-top:6px;background:var(--wb-bg);border-radius:4px;padding:8px 10px;font-size:14px}
 .wbtext p{margin:.3em 0}
 .wbtext .tt{font-weight:600}
@@ -141,8 +141,10 @@ html[data-theme=dark] .wbchip{background:#3a2c1c;color:#ffb066}
   display:flex;align-items:center;justify-content:center;font-size:22px;line-height:1}
 .wbtabbar button.on{color:var(--wb-org)}
 @media(min-width:1001px){ .wbtabbar{display:none} .wbbar{margin-bottom:12px} }
-@media(max-width:1000px){ .wb{padding-bottom:96px} }   /* 底部 tab bar 会压住最后一行 */
-/* 微博手机版的动作条是四个图标,不是三个文字按钮 */
+@media(max-width:1000px){ .wb{padding-bottom:calc(124px + env(safe-area-inset-bottom))} }  /* 底栏 + iPhone 安全区,否则最后一条被齐腰切掉 */
+/* 动作条图标必须是内联 SVG:emoji 在没装 emoji 字体的环境里全渲染成豆腐块(第4轮审查抓到) */
+.wbicons svg{width:17px;height:17px;flex:none;stroke:currentColor;fill:none;
+  stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .wbicons{display:flex;border-top:1px solid var(--wb-line);margin-top:8px}  /* 线与卡同宽 */
 .wbicons button{flex:1;border:0;background:none;color:var(--wb-meta);font-size:13px;padding:10px 0;
   cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
@@ -284,7 +286,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-02h';
+const BUILD='2026-09-02i';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -506,10 +508,18 @@ function oneSentence(t,limit){
      .filter(l=>!/^\s*\|/.test(l) && !/^\s*#{1,6}\s/.test(l) && !/^\s*```/.test(l)
                 && !/^\s*[-*]{3,}\s*$/.test(l) && !/^\s*\|?[\s:-]+\|/.test(l))
      .join('\n');
+  // 列表只取第一条:三个并列定义被 \n→空格 压成一段,读起来是"σ-域 = … σ-可加 = … σ-有限 = …"
+  // 一串等号挤在一行(第4轮审查)。摘要本来就只该给一个钩子。
+  const items=t.split('\n').filter(l=>/^\s*[-*]\s+/.test(l));
+  if(items.length>1) t=items[0];
   t=t.replace(/\*\*/g,'').replace(/^\s*[-*]\s+/gm,'').replace(/\n+/g,' ').trim();
+  // 块级公式整条搬走:摘要里放不下,截断后剩半截 $$ 会让 KaTeX 匹配失败、
+  // marked 反而把 \, \frac 当 markdown 吃掉,页面上直接露出 LaTeX 源码(第4轮审查抓到)
+  t=t.replace(/\$\$[\s\S]*?\$\$/g,' ').replace(/ +/g,' ');
   const m=t.match(/^[\s\S]{10,}?[。;;!?!?]/);
   let out=m?m[0]:t;
   if(out.length>limit) out=out.slice(0,limit)+'…';
+  out=out.replace(/\$\$[\s\S]*$/,'');                    // 残留的开头 $$
   if((out.match(/\$/g)||[]).length%2) out=out.replace(/\$[^$]*$/,'');
   return out.trim();
 }
@@ -650,8 +660,17 @@ function feedWeight(c){
 function nextBatch(n){
   const src=(typeof feedGroup!=='undefined'&&feedGroup!=='all')?FEED.filter(c=>c.kind===feedGroup):FEED;
   const pool=src.map(c=>({c,w:feedWeight(c)})).sort((a,b)=>b.w-a.w);
-  const out=[]; const used=new Set();
-  for(const p of pool){ if(out.length>=n)break; if(used.has(p.c.key))continue; used.add(p.c.key); out.push(p.c); }
+  // 纯按权重取会出现同一个人设连发五条(第4轮审查:整屏都是「可测但不想营业」)。
+  // 取的时候跳过最近两条已用过的作者,实在没别人可用再放行。
+  const out=[]; const used=new Set(); const rest=[];
+  const au=c=>c.post?c.post.author:(c.per&&c.per.n)||'';
+  for(const p of pool){
+    if(out.length>=n)break;
+    if(used.has(p.c.key))continue;
+    if(out.slice(-2).some(o=>au(o)===au(p.c))){ rest.push(p); continue; }
+    used.add(p.c.key); out.push(p.c);
+  }
+  for(const p of rest){ if(out.length>=n)break; if(used.has(p.c.key))continue; used.add(p.c.key); out.push(p.c); }
   return out;
 }
 function feedAgo(at){
@@ -667,7 +686,8 @@ function feedAgo(at){
 function fakeN(id,salt){
   let h=salt; for(let i=0;i<id.length;i++) h=(h*33+id.charCodeAt(i))|0;
   h=Math.abs(h)%997;
-  return h<3?'':(h<300?h:(h<800?Math.floor(h/7):(Math.floor(h/97)+'万')));
+  // 上限压在三位数:这是她一个人的流,出现"10万赞"立刻破功(第4轮审查)
+  return h<4?'':(h<600?Math.max(1,h%420):Math.max(2,Math.floor(h/9)));
 }
 function wbAvatar(pk,size){
   const q=per(pk); const s=size||44;
@@ -725,9 +745,9 @@ function ocard(c){
     ${rep}${wbPoll(x.id,x.poll)}
     ${wbComments(x.seed_comments)}
     <div class="wbicons">
-      <button onclick="rephrase('${esc(x.kp_slug||'')}','${esc(x.topic||'')}','${esc(c.key)}')">🔁 <span class="wbcount">${fakeN(x.id,1)||'转发'}</span></button>
-      <button onclick="feedAsk('${esc(c.key)}','${esc((x.body_md||'').slice(0,40).replace(/['\n]/g,' '))}')">💬 <span class="wbcount">${fakeN(x.id,2)||'评论'}</span></button>
-      <button class="${r.liked?'on':''}" onclick="feedAct(this,'${esc(c.key)}','post','like')">👍 <span class="wbcount">${fakeN(x.id,3)||'赞'}${r.liked?' ✓':''}</span></button>
+      <button onclick="rephrase('${esc(x.kp_slug||'')}','${esc(x.topic||'')}','${esc(c.key)}')"><svg viewBox='0 0 24 24'><path d='M4 9.5A3.5 3.5 0 0 1 7.5 6H18'/><path d='M15.5 3.5 18.5 6l-3 2.5'/><path d='M20 14.5a3.5 3.5 0 0 1-3.5 3.5H6'/><path d='M8.5 20.5 5.5 18l3-2.5'/></svg><span class="wbcount">${fakeN(x.id,1)||'转发'}</span></button>
+      <button onclick="feedAsk('${esc(c.key)}','${esc((x.body_md||'').slice(0,40).replace(/['\n]/g,' '))}')"><svg viewBox='0 0 24 24'><path d='M20.5 11.7c0 3.9-3.8 7-8.5 7-1 0-2-.15-2.9-.42L4 20l1.5-3.4C4.2 15.3 3.5 13.6 3.5 11.7c0-3.87 3.8-7 8.5-7s8.5 3.13 8.5 7Z'/></svg><span class="wbcount">${fakeN(x.id,2)||'评论'}</span></button>
+      <button class="${r.liked?'on':''}" onclick="feedAct(this,'${esc(c.key)}','post','like')"><svg viewBox='0 0 24 24'><path d='M7 21V10.5l4.2-7a1.9 1.9 0 0 1 3.4 1.7L13.3 9.5H19a2 2 0 0 1 2 2.35l-1.3 6.8A2.6 2.6 0 0 1 17.1 21Z'/><rect x='3' y='10.5' width='4' height='10.5' rx='1'/></svg><span class="wbcount">${fakeN(x.id,3)||'赞'}</span></button>
     </div></div>`;
 }
 /* 换个讲法:立刻在下面插一条同主题、不同账号的帖 */
