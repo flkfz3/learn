@@ -87,7 +87,8 @@ html[data-theme=dark] .wbav{background:linear-gradient(135deg,#4a3f7a,#6b5aa8);c
 .wbcmt,.wbrep{text-wrap:pretty;line-break:strict}   /* 不加 strict,行内公式后面那个逗号会被甩到行首 */
 .wbcmt .katex,.wbrep .katex{white-space:nowrap;font-size:.95em}   /* 公式不许被行尾劈开(第15轮审查) */
 .nb{white-space:nowrap}
-.wbtext strong,.wbcmt strong{white-space:nowrap}   /* 加粗短语折行会改语义：「不要求不交」→「不要」/「求不交」 */   /* 带连字符/拉丁字母的术语不许劈开:σ-域 断成「σ-」+「域。」最难看 */
+.wbtext strong,.wbcmt strong{white-space:nowrap}   /* 加粗短语折行会改语义：「不要求不交」→「不要」/「求不交」 */
+.wbtext strong.wrapok,.wbcmt strong.wrapok{white-space:normal;overflow-wrap:break-word}   /* 带连字符/拉丁字母的术语不许劈开:σ-域 断成「σ-」+「域。」最难看 */
 /* feed 里的表格原来一条样式都没有(.md table 只管知识库页),裸 table 在按行数裁的
    -webkit-box 容器里表头和数据列会错开,看着像排版事故(确认轮抓到) */
 .wbtext table{display:block;width:100%;border-collapse:collapse;overflow-x:auto;margin:6px 0;font-size:13px}
@@ -347,7 +348,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-03o';
+const BUILD='2026-09-03p';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -879,8 +880,8 @@ function runScan(root){
   for(let i=0;i<cards.length;i++){
     if(!cards[i].classList.contains('folded'))continue;
     let j=i; while(j<cards.length && cards[j].classList.contains('folded')) j++;
-    const nm=(cards[i].querySelector('.wbname')||{}).textContent
-             || (cards[i-1]&&(cards[i-1].querySelector('.wbname')||{}).textContent) || '这个账号';
+    let nm='这个账号';
+    for(let k=i-1;k>=0;k--){ const t=(cards[k].querySelector('.wbname')||{}).textContent; if(t){nm=t;break;} }
     const btn=document.createElement('div');
     btn.className='wbrun';
     btn.textContent=`${nm.replace('V','')} 连发 ${j-i+2} 条 · 展开剩下 ${j-i} 条`;
@@ -890,6 +891,10 @@ function runScan(root){
   }
 }
 function clipScan(root){
+  // 长的加粗串(术语标题之类)不能 nowrap,否则会被屏幕右缘直接裁掉
+  (root||document).querySelectorAll('.wbtext strong,.wbcmt strong').forEach(e=>{
+    if((e.textContent||'').length>10) e.classList.add('wrapok');
+  });
   (root||document).querySelectorAll('.wbtext.clip').forEach(e=>{
     const btn=e.nextElementSibling;
     if(!btn||!btn.classList.contains('wbmore2'))return;
