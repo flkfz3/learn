@@ -136,6 +136,26 @@ html[data-theme=dark] .wbchip{background:#3a2c1c;color:#ffb066}
 .wbmore{position:absolute;right:12px;top:12px;color:var(--wb-meta);font-size:13px;cursor:pointer}
 .wbpost{position:relative}
 .wbtrans{color:var(--wb-meta);font-size:13px;cursor:pointer;margin-bottom:2px;display:inline-block}
+/* 转发块:微博的灰底引用 */
+.wbrep{background:var(--wb-bg);border-radius:4px;padding:8px 10px;margin:6px 0;font-size:13.5px}
+.wbrep .who{color:var(--wb-blue)}
+/* 评论区 */
+.wbcmt{border-top:1px solid var(--wb-line);margin-top:8px;padding-top:6px}
+.wbcmt .row{display:flex;gap:7px;padding:3px 0;font-size:13px;line-height:1.55}
+.wbcmt .ca{width:22px;height:22px;border-radius:50%;flex:none;display:flex;align-items:center;
+  justify-content:center;font-size:11px;color:#fff;font-weight:700}
+.wbcmt .cn{color:var(--wb-blue)}
+/* 投票 */
+.wbpoll{border:1px solid var(--wb-line);border-radius:4px;padding:8px 10px;margin:6px 0}
+.wbpoll .opt{display:block;width:100%;text-align:left;border:1px solid var(--wb-line);
+  background:var(--wb-card);color:var(--wb-txt);border-radius:3px;padding:6px 9px;margin:4px 0;
+  cursor:pointer;font-size:13.5px}
+.wbpoll .opt:hover{border-color:var(--wb-org)}
+.wbpoll .opt.right{border-color:#2e7d32;color:#2e7d32;font-weight:600}
+.wbpoll .opt.wrong{border-color:#c62828;color:#c62828}
+.wbpoll .ex{font-size:13px;color:var(--wb-meta);margin-top:6px;display:none}
+.wbverify{font-size:11.5px;color:var(--wb-org);margin-left:4px}
+
 
 nav{display:flex;gap:4px;border-bottom:1.5px solid var(--line);margin:4px 0 16px;overflow-x:auto;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent)}
 nav::-webkit-scrollbar{display:none}
@@ -319,7 +339,7 @@ function show(logged){
 
 /* ---------- data ---------- */
 async function loadAll(){
-  const [kp,lec,qa,rq,sl,en,hw,fe]=await Promise.all([
+  const [kp,lec,qa,rq,sl,en,hw,fe,fp]=await Promise.all([
     sb.from('knowledge_points').select('*').order('updated_at',{ascending:false}).limit(1000),
     sb.from('lectures').select('*').order('lecture_date',{ascending:false}).limit(400),
     sb.from('qa_log').select('*').order('asked_at',{ascending:false}).limit(500),
@@ -327,8 +347,9 @@ async function loadAll(){
     sb.from('study_log').select('*').order('study_on',{ascending:false}).limit(400),
     sb.from('english_log').select('*').order('asked_at',{ascending:false}).limit(1000),
     sb.from('homework').select('*').order('due_at',{ascending:false}).limit(200),
-    sb.from('feed_events').select('card_key,action,at').order('at',{ascending:false}).limit(4000)]);
-  D={kp:kp.data||[],lec:lec.data||[],qa:qa.data||[],rq:rq.data||[],sl:sl.data||[],en:en.data||[],hw:hw.data||[],fe:fe.data||[]};
+    sb.from('feed_events').select('card_key,action,at').order('at',{ascending:false}).limit(4000),
+    sb.from('feed_posts').select('*').eq('status','published').order('posted_at',{ascending:false}).limit(500)]);
+  D={kp:kp.data||[],lec:lec.data||[],qa:qa.data||[],rq:rq.data||[],sl:sl.data||[],en:en.data||[],hw:hw.data||[],fe:fe.data||[],fp:fp.data||[]};
   buildFeed();
   COURSES={};
   D.lec.forEach(l=>{COURSES[l.course_code]=(l.extra&&l.extra.course_name)||l.course_code;});
@@ -413,6 +434,35 @@ function splitSections(body){
   });
   return out;
 }
+/* ===== OC 人设:每个账号有固定的领域、腔调、认证、发布客户端 =====
+   设计意图:她说"用户名不能是 DDL 姬那种,太无聊,仿真性高一点"。
+   所以名字按真实微博 ID 的语感取,认证写成微博那种一句话认证,
+   来源客户端各不相同("来自 深夜FM客户端"比"来自学习库"像得多)。   */
+const PER={
+  p_num:{n:'P不是一个数',   av:'P', c:'#e8543f', v:'概率论基础区常驻答疑', dev:'微博网页版',
+         bio:'专治「P 到底是啥」'},
+  meas :{n:'可测但不想营业', av:'测', c:'#7b5ea7', v:'测度论受害人',       dev:'iPhone 15 Pro',
+         bio:'今天也在被 σ-域管理'},
+  borel:{n:'开区间施工队',   av:'工', c:'#c9760a', v:'Borel 土木工程队',   dev:'工地记账本',
+         bio:'承接各种集合搭建工程'},
+  limsup:{n:'limsup戒断中心',av:'戒', c:'#c2185b', v:'极限行为观察员',     dev:'深夜FM',
+         bio:'专治反复横跳的序列'},
+  proof:{n:'证明写不出来bot',av:'稿', c:'#455a64', v:'',                   dev:'草稿纸网页版',
+         bio:'不会写,但会拆步骤'},
+  comp :{n:'统计计算废片场', av:'片', c:'#2e7d32', v:'统计计算片场记录员', dev:'RStudio',
+         bio:'代码跑了,结果像闹鬼'},
+  night:{n:'亜蘭式夜航电台', av:'FM', c:'#3f6fb5', v:'论文英文慢读频道',   dev:'深夜FM客户端',
+         bio:'深夜播放一些看不懂的英文'},
+  horror:{n:'老恐怖片概率馆',av:'馆', c:'#5d4037', v:'冷门海报收藏号',     dev:'胶片扫描仪',
+         bio:'Karloff 看了也会懂的概率论'},
+  ask  :{n:'今天又问到根上了',av:'问',c:'#00838f', v:'',                   dev:'匿名提问箱',
+         bio:'收录那些真正卡住人的问题'},
+  paper:{n:'paper先放收藏夹',av:'读',c:'#6d4c41', v:'论文收藏夹管理员',   dev:'知网客户端',
+         bio:'读不完,但先知道它在干嘛'},
+};
+const PERKEYS=Object.keys(PER);
+function per(k){ return PER[k]||{n:k,av:'学',c:'#888',v:'',dev:'微博网页版',bio:''}; }
+
 /* ===== 内容层:按"社交媒体为什么上瘾"的机制重做 =====
    1 变比率强化:大多数帖平淡,少数是真·爽点(词源八卦/老师金句/反直觉事实),随机出现。
    2 单位成本极低:一条帖 = 一句话,2 秒读完;长内容折成「全文」,不把阅读任务塞进流里。
@@ -457,9 +507,18 @@ function trapItems(body){
   });
   return out;
 }
+/* 写好的 OC 帖子 = 主内容源;原来那套从知识库自动拼的降级成补充 */
+function postCards(){
+  const byId={}; (D.fp||[]).forEach(x=>byId[x.id]=x);
+  return (D.fp||[]).map(x=>({
+    key:'post:'+x.id, kind:'post', post:x, level:x.level||1,
+    per:per(x.author), at:x.posted_at, from:per(x.author).dev,
+    hot:!!x.hot, slug:x.kp_slug, quoted: x.quote_of? byId[x.quote_of] : null,
+  }));
+}
 function buildFeed(){
   buildFeedSeen();
-  const C=[]; const push=o=>C.push(o);
+  const C=postCards(); const push=o=>C.push(o);
 
   /* ---- 一句话帖:每个知识点的定调句,读完 2 秒 ---- */
   D.kp.filter(k=>k.kind!=='term').forEach(k=>{
@@ -542,7 +601,7 @@ function buildFeed(){
 /* 权重:基础优先 + 看过衰减 + 久未见回升 + 抖动 */
 function feedWeight(c){
   const r=feKey(c.key), now=Date.now();
-  let w = c.pin?40 : ({term:1.0,kp:1.2,lec:1.15,en:1.0,read:.9,qa:.8,note:.7,hw:2})[c.kind]||1;
+  let w = c.pin?40 : ({post:3.2,term:.5,kp:.5,lec:.6,en:.5,read:.5,qa:.4,note:.35,hw:2})[c.kind]||1;
   w *= (c.level===1?1.35:c.level===2?1:.7);
   w /= (1+1.6*r.seen);
   if(r.last){ const days=(now-r.last)/864e5; w *= Math.min(3, .35+days/2); }
@@ -566,7 +625,73 @@ function feedAgo(at){
   if(d<43200)return Math.floor(d/1440)+'天前';
   return new Intl.DateTimeFormat('zh-CN',{timeZone:TZ,month:'numeric',day:'numeric'}).format(new Date(at));
 }
+function wbAvatar(pk,size){
+  const q=per(pk); const s=size||44;
+  return `<div class="wbav" style="width:${s}px;height:${s}px;background:${q.c};color:#fff;
+     font-size:${Math.round(s*0.4)}px;border:0">${esc(q.av)}</div>`;
+}
+function wbComments(list){
+  if(!list||!list.length)return '';
+  return `<div class="wbcmt">`+list.map(x=>{const q=per(x.author);
+    return `<div class="row"><div class="ca" style="background:${q.c}">${esc(q.av)}</div>
+      <div><span class="cn">${esc(q.n)}</span>：${md(x.text).replace(/^<p>|<\/p>$/g,'')}</div></div>`;
+  }).join('')+`</div>`;
+}
+function wbPoll(id,poll){
+  if(!poll)return '';
+  const opts=(poll.options||[]).map((o,i)=>
+    `<button class="opt" data-i="${i}" onclick="votePoll('${id}',${i},${poll.answer})">${esc(o)}</button>`).join('');
+  return `<div class="wbpoll" id="poll-${id}"><div style="margin-bottom:4px">${esc(poll.q||'')}</div>
+     ${opts}<div class="ex">${md(poll.explain_md||'')}</div></div>`;
+}
+function votePoll(id,i,ans){
+  const box=document.getElementById('poll-'+id); if(!box)return;
+  box.querySelectorAll('.opt').forEach((b,j)=>{
+    b.classList.add(j===ans?'right':(j===i?'wrong':''));
+    b.onclick=null;
+  });
+  box.querySelector('.ex').style.display='block';
+  if(sb) sb.from('feed_events').insert({card_key:'poll:'+id,kind:'poll',action:i===ans?'like':'later'});
+}
+/* 写好的 OC 帖子 */
+function ocard(c){
+  const x=c.post, q=per(x.author), r=feKey(c.key);
+  const rep = c.quoted ? `<div class="wbrep"><span class="who">@${esc(per(c.quoted.author).n)}</span>：
+      ${md(c.quoted.body_md).replace(/^<p>|<\/p>$/g,'')}</div>` : '';
+  const full = x.full_md ? `<details class="wbquiz"><summary>全文</summary>
+      <div style="margin-top:6px">${md(x.full_md)}</div></details>` : '';
+  const kplink = x.kp_slug ? `<span class="wblink" onclick="openKPslug('${esc(x.kp_slug)}')">进主页</span>` : '';
+  return `<div class="wbpost" data-k="${esc(c.key)}">
+    <span class="wbmore" onclick="feedNope('${esc(c.key)}','post')" title="不想看这条">⌄</span>
+    <div class="wbtop">${wbAvatar(x.author)}
+      <div style="flex:1;min-width:0">
+        <div class="wbname">${esc(q.n)}${q.v?`<span class="wbverify">✔ ${esc(q.v)}</span>`:''}</div>
+        <div class="wbfrom">${feedAgo(x.posted_at)} · 来自 <b>${esc(q.dev)}</b>${x.hot?'<span class="wbchip">🔥</span>':''}</div>
+      </div></div>
+    <div class="wbtext">${md(x.body_md)}</div>
+    ${rep}${wbPoll(x.id,x.poll)}${full}
+    ${kplink?`<div style="margin:4px 0 2px">${kplink}</div>`:''}
+    ${wbComments(x.seed_comments)}
+    <div class="wbicons">
+      <button class="${r.liked?'on':''}" onclick="feedAct(this,'${esc(c.key)}','post','like')">👍 <span class="n">懂了</span></button>
+      <button onclick="feedAsk('${esc(c.key)}','${esc((x.body_md||'').slice(0,40).replace(/['\n]/g,' '))}')">💬 <span class="n">追问</span></button>
+      <button onclick="rephrase('${esc(x.kp_slug||'')}','${esc(x.topic||'')}','${esc(c.key)}')">🔁 <span class="n">换个讲法</span></button>
+      <button class="${r.later?'on':''}" onclick="feedAct(this,'${esc(c.key)}','post','later')">🔖 <span class="n">收藏</span></button>
+    </div></div>`;
+}
+/* 换个讲法:立刻在下面插一条同主题、不同账号的帖 */
+function rephrase(slug,topic,key){
+  const pool=(D.fp||[]).filter(x=>((slug&&x.kp_slug===slug)||(topic&&x.topic===topic)) && ('post:'+x.id)!==key);
+  if(!pool.length)return toast('这个点暂时只有这一条讲法');
+  const pick=pool[Math.floor(Math.random()*pool.length)];
+  const el=document.querySelector(`.wbpost[data-k="${key}"]`); if(!el)return;
+  const c={key:'post:'+pick.id,kind:'post',post:pick,per:per(pick.author),at:pick.posted_at,
+           quoted:pick.quote_of?(D.fp||[]).find(y=>y.id===pick.quote_of):null};
+  el.insertAdjacentHTML('afterend',ocard(c)); mathify(el.nextElementSibling);
+  markSeen([{key:c.key,kind:'post'}]);
+}
 function fcard(c){
+  if(c.kind==='post') return ocard(c);
   const r=feKey(c.key), per=c.per||{n:'学习',a:'学',v:0};
   const chip = c.hot?'<span class="wbchip">🔥</span>':(c.level===1?'<span class="wbchip">基础</span>':c.level===3?'<span class="wbchip">推导</span>':'');
   let links='';
