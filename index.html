@@ -279,6 +279,19 @@ nav button.on{color:var(--ink);font-weight:600;border-bottom-color:var(--accent)
   border:1px solid var(--line)}
 html[data-theme=dark] .md img{filter:brightness(.92)}
 .md img+em{display:block;text-align:center;font-size:12.5px;color:var(--muted);margin:-4px 0 12px}
+/* 讲义分层:课上讲的 / 我据 note 补的 / note 里的例题 —— 她要一眼分得出来源 */
+.md .mk{border-left:3px solid;padding:2px 0 2px 10px;margin:6px 0}
+.md .mk-c{border-color:#2e7d32;background:rgba(46,125,50,.05)}   /* 课上讲的 */
+.md .mk-b{border-color:#6d5dfc;background:rgba(109,93,252,.05)}  /* 我据 note 补的 */
+.md .mk-x{border-color:#e8543f;background:rgba(232,84,63,.05)}   /* note 里的例题/习题 */
+.md .mk-ans{margin:2px 0 10px 13px}
+.md .mk-ans summary{cursor:pointer;color:var(--accent);font-size:13px}
+.md .mk-ans .mk-a{border-color:#939393;background:var(--well)}
+.md .lg{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:2px 0 10px}
+.md .lg i{font-style:normal;border-left:3px solid;padding-left:6px}
+html[data-theme=dark] .md .mk-c{background:rgba(46,125,50,.14)}
+html[data-theme=dark] .md .mk-b{background:rgba(143,131,255,.14)}
+html[data-theme=dark] .md .mk-x{background:rgba(232,84,63,.14)}
 .md td,.md th{border:1px solid var(--line);padding:3px 9px;font-size:13.5px}
 .muted{color:var(--muted);font-size:13px}
 .empty{color:var(--faint);font-size:13px;padding:8px 0}
@@ -360,7 +373,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-04a';
+const BUILD='2026-09-04b';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -422,6 +435,11 @@ function md(s){
   // 屏上读成「不要求不交 A3」—— 一个关于 A3 的错误论断(实拍两张卡都栽了)。
   // 微博式的短句正文本来就是靠换行分条的,单换行必须当断行。
   let html=marked.parse(s,{mangle:false,headerIds:false,breaks:true});
+  // 讲义标记:@课 老师讲的 / @补 我据 note 补的 / @练 note 里的例题习题 / @答 折叠的答案
+  html=html.replace(/(<(?:p|li|blockquote)[^>]*)>\s*@(课|补|练|答)\s*/g,
+    (m,open,k)=>`${open} class="mk mk-${{'课':'c','补':'b','练':'x','答':'a'}[k]}">`);
+  html=html.replace(/<(p|li)([^>]*) class="mk mk-a"([^>]*)>([\s\S]*?)<\/\1>/g,
+    (m,tag,a,b,inner)=>`<details class="mk-ans"><summary>看答案</summary><${tag}${a}${b}>${inner}</${tag}></details>`);
   html=html.replace(/@@MATH(\d+)@@/g,(_,i)=>esc(store[+i]));
   return html;
 }
