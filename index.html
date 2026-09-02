@@ -85,6 +85,7 @@ html[data-theme=dark] .wbav{background:linear-gradient(135deg,#4a3f7a,#6b5aa8);c
   /* 不加 overflow-wrap:anywhere —— 它会把「关键」拆成「关」+「键」(第7轮审查 P1-4)。
      text-wrap:pretty 专治末行只剩两个字的孤行(第8轮审查 P1)。 */
 .wbcmt,.wbrep{text-wrap:pretty;line-break:strict}   /* 不加 strict,行内公式后面那个逗号会被甩到行首 */
+.wbcmt .katex,.wbrep .katex{white-space:nowrap;font-size:.95em}   /* 公式不许被行尾劈开(第15轮审查) */
 .nb{white-space:nowrap}   /* 带连字符/拉丁字母的术语不许劈开:σ-域 断成「σ-」+「域。」最难看 */
 /* feed 里的表格原来一条样式都没有(.md table 只管知识库页),裸 table 在按行数裁的
    -webkit-box 容器里表头和数据列会错开,看着像排版事故(确认轮抓到) */
@@ -340,7 +341,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-03f';
+const BUILD='2026-09-03g';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -882,12 +883,12 @@ function wbComments(list,key,owner){
   if(!list||!list.length)return '';
   const row=(x,i)=>{const q=per(x.author); const mine=owner&&x.author===owner;
     const cont = i>0 && list[i-1].author===x.author;   // 接着上一条的同一个人
-    return `<div class="row${i>=3?' more':''}${cont?' cont':''}">${cont?'<span class="ca ghost"></span>'
+    return `<div class="row${i>=4?' more':''}${cont?' cont':''}">${cont?'<span class="ca ghost"></span>'
        :(q.img?`<img class="ca" src="${AVBASE}${q.img}" alt=""
         onerror="this.outerHTML='<div class=ca style=background:${q.c}>${esc(q.av)}</div>'">`
        :`<div class="ca" style="background:${q.c}">${esc(q.av)}</div>`)}
       <div>${cont?'':`<span class="cn">${esc(q.n)}</span>${mine?'<span class="owner">博主</span>':''}：`}${md(x.text).replace(/^<p>|<\/p>$/g,'')}</div></div>`;};
-  const hid=list.length-3;
+  const hid=list.length-4;   // 只藏 1 条不值得挂个按钮,超过 4 条才折
   return `<div class="wbcmt">`+list.map(row).join('')
     +(hid>0?`<div class="cmore" onclick="this.parentElement.classList.add('all');this.remove()">展开剩余 ${hid} 条</div>`:'')
     +`<div class="cmore" onclick="feedAsk('${esc(key||'')}','')">写条评论</div></div>`;
