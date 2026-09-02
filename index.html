@@ -342,7 +342,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-03h';
+const BUILD='2026-09-03i';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -733,7 +733,12 @@ function buildFeed(){
 /* 权重：基础优先 + 看过衰减 + 久未见回升 + 抖动 */
 function feedWeight(c){
   const r=feKey(c.key), now=Date.now();
-  let w = c.pin?40 : ({post:3.2,term:.5,kp:.5,lec:.6,en:.5,read:.5,qa:.4,note:.35,hw:2})[c.kind]||1;
+  // 自动卡包装成 OC 帖之后 kind 全变成 'post',这张权重表里的 term/kp/lec 那几档**再也没被用上**,
+  // 于是知识库自动卡拿到了和写好的帖一样的 3.2 —— 实测抽 96 张有 51 张是自动卡,
+  // 统计推断/线性模型/统计计算的帖子几乎选不上(整体审查抓到"四屏里全是概率论和英语")。
+  // 用 c.auto 把它们降回来。
+  let w = c.pin?40 : (c.auto ? ({term:.5,kp:.5,lec:.6,en:.5,read:.5,qa:.4,note:.35}[c.post&&c.post.topic]??.5)
+                             : ({post:3.2,hw:2})[c.kind]||3.2);
   w *= (c.level===1?1.35:c.level===2?1:.7);
   w /= (1+1.6*r.seen);
   if(r.last){ const days=(now-r.last)/864e5; w *= Math.min(3, .35+days/2); }
