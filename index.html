@@ -281,16 +281,22 @@ html[data-theme=dark] .md img{filter:brightness(.92)}
 .md img+em,.md p>em:only-child{display:block;text-align:center;font-size:12.5px;color:var(--muted);margin:-4px 0 12px}
 /* 讲义里的长公式:给它自己一个横滑框,别把整页顶出去(实测 486px 的公式撑爆 360px 的容器)。
    这里不缩字号 —— 一篇讲义里公式忽大忽小比横滑更难读。 */
-.md .katex-display{overflow-x:auto;overflow-y:hidden;padding-bottom:2px}
+.md .katex-display{overflow-x:auto;overflow-y:hidden;padding-bottom:4px;position:relative}
+/* 横滑没有提示的话,读到半截会以为公式渲染坏了(审查实拍:A3 整条在屏外、结论方框只剩一个「[」)*/
+.md .katex-display::-webkit-scrollbar{height:5px}
+.md .katex-display::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+.md .scrollhint{position:relative}
+.md .scrollhint::after{content:'';position:absolute;top:0;right:0;bottom:4px;width:34px;pointer-events:none;
+  background:linear-gradient(90deg,transparent,var(--card) 78%)}
 .md{overflow-x:hidden}
 /* 讲义分层:课上讲的 / 我据 note 补的 / note 里的例题 —— 她要一眼分得出来源 */
 .md .mk{border-left:3px solid;padding:2px 0 2px 10px;margin:6px 0}
-.md .mk-c{border-color:#2e7d32;background:rgba(46,125,50,.05)}   /* 课上讲的 */
-.md .mk-b{border-color:#6d5dfc;background:rgba(109,93,252,.05)}  /* 我据 note 补的 */
-.md .mk-x{border-color:#e8543f;background:rgba(232,84,63,.05)}   /* note 里的例题/习题 */
-.md .mki{border-left:3px solid;padding-left:10px;display:inline-block;margin:2px 0}
+.md .mk-c{border-color:#2e7d32;background:rgba(46,125,50,.09)}   /* 课上讲的 */
+.md .mk-b{border-color:#6d5dfc;background:rgba(109,93,252,.09)}  /* 我据 note 补的 */
+.md .mk-x{border-color:#e8543f;background:rgba(232,84,63,.09)}   /* note 里的例题/习题 */
+.md .mki{border-left-width:3px;border-left-style:solid;padding-left:10px;display:inline-block;margin:2px 0}
 .md .mk-ans{margin:2px 0 10px 13px}
-.md .mk-ans summary{cursor:pointer;color:var(--accent);font-size:13px}
+.md .mk-ans summary{cursor:pointer;color:#c0392b;font-size:13px}   /* 跟红色的题同一族,别用紫(那是「我补的」) */
 .md .mk-ans .mk-a{border-color:#939393;background:var(--well)}
 .md .lg{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:2px 0 10px}
 .md .lg i{font-style:normal;border-left:3px solid;padding-left:6px}
@@ -378,7 +384,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-04e';
+const BUILD='2026-09-04f';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -446,10 +452,11 @@ function md(s){
     (m,open,k)=>`${open} class="mk mk-${MKC[k]}">`);
   // 连着几行同一个标记会被 breaks:true 并进同一个 <p>,只有第一行吃到标记;
   // <br> 后面的那些要单独转成行内色条(实测漏了 2 处)
-  html=html.replace(/<br\s*\/?>\s*@(课|补|练|答)\s*/g,
-    (m,k)=>`<br><span class="mki mk-${MKC[k]}">`+'\u200b'.repeat(0));
+  html=html.replace(/<br\s*\/?>\s*@(课|补|练|答)\s*([\s\S]*?)(?=<br\s*\/?>|<\/p>|<\/li>|$)/g,
+    (m,k,body)=>`<br><span class="mki mk-${MKC[k]}">${body}</span>`);
   html=html.replace(/<(p|li)([^>]*) class="mk mk-a"([^>]*)>([\s\S]*?)<\/\1>/g,
-    (m,tag,a,b,inner)=>`<details class="mk-ans"><summary>看答案</summary><${tag}${a}${b}>${inner}</${tag}></details>`);
+    (m,tag,a,b,inner)=>`<details class="mk-ans"><summary>看答案</summary>`
+      +`<${tag}${a} class="mk mk-a"${b}>${inner}</${tag}></details>`);
   html=html.replace(/@@MATH(\d+)@@/g,(_,i)=>esc(store[+i]));
   return html;
 }
@@ -526,7 +533,7 @@ function render(){
   if(hdr) hdr.style.display = isFeed?'none':'';
   if(tabs)tabs.style.display= isFeed?'none':'flex';
   v.innerHTML=({feed:rFeed,today:rToday,courses:rCourses,kb:rKB,terms:rTerms,hw:rHW,read:rRead,en:rEN,qa:rQA})[cur]();
-  mathify(v); fitFig(v); clipScan(v); runScan(v);
+  mathify(v); fitFig(v); clipScan(v); runScan(v); hintScroll(v);
 }
 const ORIGIN_ZH={meeting:'组会/会议',qe:'重点复习',course:'课程',paper:'论文',telegram:'随手记',window:'窗口问答',manual:'手动'};
 
@@ -954,6 +961,12 @@ function runScan(root){
     cards[i].parentNode.insertBefore(btn, cards[i]);
     i=j-1;
   }
+}
+/* 只给真的横滑得动的公式挂渐隐 —— 不超宽的挂上去只会平白多一道灰边 */
+function hintScroll(root){
+  (root||document).querySelectorAll('.md .katex-display').forEach(e=>{
+    e.classList.toggle('scrollhint', e.scrollWidth > e.clientWidth + 2);
+  });
 }
 function clipScan(root){
   // 长的加粗串(术语标题之类)不能 nowrap,否则会被屏幕右缘直接裁掉
