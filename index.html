@@ -286,7 +286,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-02i';
+const BUILD='2026-09-02j';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -890,7 +890,11 @@ async function flushSeen(){
   const q=seenQueue.splice(0); if(!q.length||!sb)return;
   await sb.from('feed_events').insert(q);
 }
+// 截图审查用:?noevents=1 时不落库浏览记录。headless 一次跑会写几百条 seen,
+// 把「看过衰减」权重整体压平,等于替她把整个池子刷完(2026-09-02 清过一次 792 条)。
+const NOEV=/[?&]noevents=1/.test(location.search);
 function markSeen(cards){
+  if(NOEV){ cards.forEach(c=>feKey(c.key||c).seen++); return; }
   cards.forEach(c=>{ const k=c.key||c; feKey(k).seen++; seenQueue.push({card_key:k,kind:c.kind||'card',action:'seen'}); });
   clearTimeout(seenTimer);
   seenTimer=setTimeout(flushSeen,800);
