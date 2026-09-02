@@ -348,7 +348,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-03q';
+const BUILD='2026-09-03r';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -1011,8 +1011,9 @@ function ocard(c){
   const x=c.post, q=per(x.author), r=feKey(c.key);
   // 最用力的那张卡(公式卡+评论区)互动数却是全场最低，看着假(第7轮审查 P2-9)
   const boost=1+(x.figure?0.8:0)+((x.seed_comments||[]).length?0.5:0)+(x.poll?0.4:0);
-  const rep = c.quoted ? `<div class="wbrep"><span class="who">@${esc(per(c.quoted.author).n)}</span>：
-      ${md(c.quoted.body_md).replace(/^<p>|<\/p>$/g,'')}</div>` : '';
+  // 模板里「：」后面换行 + 缩进,HTML 会把它折成一个空格,屏上就是「@名字： Bootstrap…」
+  const rep = c.quoted ? `<div class="wbrep"><span class="who">@${esc(per(c.quoted.author).n)}</span>：${
+      md(c.quoted.body_md).replace(/^<p>|<\/p>$/g,'')}</div>` : '';
   // 展开只留一个控件。原来行内「…展开」(管 full_md)和整行「展开全文」(管行数)并存，
   // 同一个流里两种截断语义、两种省略号(第7轮审查 P1-2)。现在 full_md 直接接在正文后面，
   // 一起交给按行数裁切的 .clip 管。
