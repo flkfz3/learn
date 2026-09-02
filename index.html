@@ -104,10 +104,11 @@ code,pre,kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"PingFang SC
 /* 收起状态按行数裁,不按字符数 —— 否则两行的卡被收起、八行的卡反而全展开(第6轮审查 4) */
 .wbtext.clip{display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
 .wbtext.clip p:last-child{margin-bottom:0}
-.wbmore2{color:#1a73e8;cursor:pointer;font-size:14px;margin:2px 0 5px;display:none}
+.wbmore2{color:#1a73e8;cursor:pointer;font-size:13.5px;margin:7px 0 5px;display:none}
 .wbmore2.show{display:block}
-/* 正文里的块级公式也左对齐,不然同一张卡上下两个公式一个居中一个靠左 */
-.wbtext .katex-display{text-align:left;margin:.4em 0}
+/* 正文里的块级公式也左对齐,不然同一张卡上下两个公式一个居中一个靠左。
+   字号比正文略大 —— 推导帖里公式是主料;上紧下松,让"一句说明 + 它的公式"读起来是一块。 */
+.wbtext .katex-display{text-align:left;margin:.12em 0 .8em;font-size:1.05em}
 .wbtext .katex{font-size:0.95em}
 .wbtext p{margin:.3em 0}
 .wbtext .tt{font-weight:600}
@@ -329,7 +330,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-03a';
+const BUILD='2026-09-03b';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -813,11 +814,8 @@ function fitFig(root){
   // 正文里的块级公式也会超宽。它外面是按行数裁的 .clip(overflow:hidden),
   // 横向也一起裁掉 —— 屏幕上就是等号被从中间切成两半(第9轮审查)。所以只能缩，不能靠滚。
   R.querySelectorAll('.wbtext .katex-display, .wbcmt .katex-display').forEach(e=>{
-    const box=e.parentElement && e.closest('.wbtext,.wbcmt'); if(!box)return;
-    const inner=e.querySelector('.katex'); if(!inner)return;
     e.style.fontSize='';
-    for(let px=100; px>=62 && inner.getBoundingClientRect().width>box.clientWidth-2; px-=4)
-      e.style.fontSize=px+'%';
+    for(let px=105; px>=62 && e.scrollWidth>e.clientWidth+1; px-=4) e.style.fontSize=px+'%';
   });
 }
 function clipScan(root){
@@ -826,7 +824,18 @@ function clipScan(root){
     if(btn&&btn.classList.contains('wbmore2')&&e.scrollHeight>e.clientHeight+2) btn.classList.add('show');
   });
 }
-function unclip(btn){ btn.previousElementSibling.classList.remove('clip'); btn.style.display='none'; }
+function unclip(btn){
+  const t=btn.previousElementSibling;
+  t.classList.remove('clip');
+  btn.textContent='收起';
+  btn.setAttribute('onclick','reclip(this)');
+}
+function reclip(btn){
+  btn.previousElementSibling.classList.add('clip');
+  btn.textContent='展开全文';
+  btn.setAttribute('onclick','unclip(this)');
+  btn.closest('.wbpost').scrollIntoView({block:'start'});
+}
 /* 热标签限流：6 张里最多挂一个。挂一半等于没挂(第7轮审查 P2-10)。*/
 let hotSeen=0, hotIdx=0;
 function hotChip(hot){
