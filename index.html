@@ -81,7 +81,13 @@ html[data-theme=dark] .wbav{background:linear-gradient(135deg,#4a3f7a,#6b5aa8);c
 .wbfrom{color:var(--wb-meta);font-size:12px;margin-top:2px}
 .wbfrom b{color:var(--wb-blue);font-weight:400}
 .wbtext{margin:7px 0 5px;font-size:15px;line-height:1.6;word-break:break-word;
-  line-break:strict}   /* 不加 overflow-wrap:anywhere —— 它会把「关键」拆成「关」+「键」(第7轮审查 P1-4) */
+  line-break:strict;text-wrap:pretty}
+  /* 不加 overflow-wrap:anywhere —— 它会把「关键」拆成「关」+「键」(第7轮审查 P1-4)。
+     text-wrap:pretty 专治末行只剩两个字的孤行(第8轮审查 P1)。 */
+.wbcmt,.wbrep{text-wrap:pretty}
+.nb{white-space:nowrap}   /* 带连字符/拉丁字母的术语不许劈开:σ-域 断成「σ-」+「域。」最难看 */
+/* 等宽字体里没有中文字形,中文会掉到别的 face 上,字重字距和正文对不上(第8轮审查 P4) */
+code,pre,kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"PingFang SC","Microsoft YaHei",monospace}
 /* 收起状态按行数裁,不按字符数 —— 否则两行的卡被收起、八行的卡反而全展开(第6轮审查 4) */
 .wbtext.clip{display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
 .wbtext.clip p:last-child{margin-bottom:0}
@@ -173,6 +179,7 @@ html[data-theme=dark] .wbchip{background:#3a2c1c;color:#ffb066}
 .wbcmt .ca{width:22px;height:22px;border-radius:50%;object-fit:cover;flex:none;display:flex;align-items:center;
   justify-content:center;font-size:11px;color:#fff;font-weight:700}
 .wbcmt .cn{color:var(--wb-blue)}
+.wbcmt .cmore{color:var(--wb-blue);font-size:13px;cursor:pointer;padding:4px 0 1px}
 /* 投票 */
 .wbpoll{border:1px solid var(--wb-line);border-radius:4px;padding:8px 10px;margin:6px 0}
 .wbpoll .opt{display:block;width:100%;text-align:left;border:1px solid var(--wb-line);
@@ -180,6 +187,10 @@ html[data-theme=dark] .wbchip{background:#3a2c1c;color:#ffb066}
   cursor:pointer;font-size:13.5px}
 .wbpoll .opt:hover{border-color:var(--wb-org)}
 .wbpoll .pmeta{font-size:11.5px;color:var(--wb-meta);margin-top:6px}
+.wbpoll .opt i{display:inline-block;width:13px;height:13px;border:1.5px solid var(--wb-line);
+  border-radius:50%;margin-right:7px;vertical-align:-2px}
+.wbpoll .opt.right i{border-color:#2e7d32;background:#2e7d32;box-shadow:inset 0 0 0 2.5px #fff}
+.wbpoll .opt.wrong i{border-color:#c62828}
 .wbpoll .opt{position:relative;overflow:hidden}
 .wbpoll .opt.voted::before{content:'';position:absolute;left:0;top:0;bottom:0;width:var(--p);
   background:var(--wb-bg);z-index:0}
@@ -302,7 +313,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-02p';
+const BUILD='2026-09-02q';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -336,6 +347,8 @@ function md(s){
   // 数学片段先抽出护住,marked 跑完再放回,否则 \{ \\ _ 会被当 markdown 吃掉
   const store=[];
   s=s.replace(/\$\$[\s\S]+?\$\$|\$[^$\n]+?\$/g,m=>{store.push(m);return '@@MATH'+(store.length-1)+'@@';});
+  s=s.replace(/(σ-域|σ-代数|σ-有限|σ-可加|π-系|λ-系|π 系|λ 系|Borel 集|Borel 可测|单调类定理|示性函数|分布函数|概率测度|可测函数|测度论)/g,
+              '<span class="nb">$1</span>');
   let html=marked.parse(s,{mangle:false,headerIds:false});
   html=html.replace(/@@MATH(\d+)@@/g,(_,i)=>esc(store[+i]));
   return html;
@@ -702,7 +715,8 @@ function pickCards(n, exclude){
   const pool=src.map(c=>({c,w:feedWeight(c)})).sort((a,b)=>b.w-a.w);
   // 纯按权重取会出现同一个人设连发五条(第4轮审查:整屏都是「可测但不想营业」)。
   // 取的时候跳过最近两条已用过的作者,实在没别人可用再放行。
-  const out=[]; const used=new Set(); const rest=[]; let plain=0, lastRich='';
+  // 从 1 起步:第二张卡就优先给有花样的。首屏是第一印象,不能两张同构文字砖(第8轮审查 P2)
+  const out=[]; const used=new Set(); const rest=[]; let plain=1, lastRich='';
   const au=c=>c.post?c.post.author:(c.per&&c.per.n)||'';
   for(let pass=0; pass<2 && out.length<n; pass++){
     for(const p of (pass?rest:pool)){
@@ -779,19 +793,19 @@ function wbAvatarText(pk,size){
      background:radial-gradient(circle at 30% 25%, ${q.c}dd, ${q.c} 45%, ${q.c}99);
      font-size:${Math.round(s*0.38)}px;text-shadow:0 1px 2px rgba(0,0,0,.25)">${esc(q.av)}</div>`;
 }
-function wbComments(list){
+function wbComments(list,key){
   if(!list||!list.length)return '';
   return `<div class="wbcmt">`+list.map(x=>{const q=per(x.author);
     return `<div class="row">${q.img?`<img class="ca" src="${AVBASE}${q.img}" alt=""
         onerror="this.outerHTML='<div class=ca style=background:${q.c}>${esc(q.av)}</div>'">`
        :`<div class="ca" style="background:${q.c}">${esc(q.av)}</div>`}
       <div><span class="cn">${esc(q.n)}</span>：${md(x.text).replace(/^<p>|<\/p>$/g,'')}</div></div>`;
-  }).join('')+`</div>`;
+  }).join('')+`<div class="cmore" onclick="feedAsk('${esc(key||'')}','')">写条评论</div></div>`;
 }
 function wbPoll(id,poll){
   if(!poll)return '';
   const opts=(poll.options||[]).map((o,i)=>
-    `<button class="opt" data-i="${i}" onclick="votePoll('${id}',${i},${poll.answer})">${esc(o)}</button>`).join('');
+    `<button class="opt" data-i="${i}" onclick="votePoll('${id}',${i},${poll.answer})"><i></i>${esc(o)}</button>`).join('');
   const votes=(poll.options||[]).map((_,i)=>fakeVote(id,i));
   const tot=votes.reduce((a,b)=>a+b,0);
   return `<div class="wbpoll" id="poll-${id}" data-v="${votes.join(',')}">
@@ -849,7 +863,7 @@ function ocard(c){
     ${x.figure?`<div class="wbfig">${md(figTex(x.figure.tex))}<span class="cap">${esc(x.figure.cap||'')}</span></div>`:''}
     ${c.due?`<div class="wbfrom" style="margin-top:2px">${dueLabel(c.due)}</div>`:''}
     ${rep}${wbPoll(x.id,x.poll)}
-    ${wbComments(x.seed_comments)}
+    ${wbComments(x.seed_comments,c.key)}
     <div class="wbicons">
       <button onclick="rephrase('${esc(x.kp_slug||'')}','${esc(x.topic||'')}','${esc(c.key)}')"><svg viewBox='0 0 24 24'><path d='M4 9.5A3.5 3.5 0 0 1 7.5 6H18'/><path d='M15.5 3.5 18.5 6l-3 2.5'/><path d='M20 14.5a3.5 3.5 0 0 1-3.5 3.5H6'/><path d='M8.5 20.5 5.5 18l3-2.5'/></svg><span class="wbcount">${fakeN(x.id,1,boost)||'转发'}</span></button>
       <button onclick="feedAsk('${esc(c.key)}','${esc((x.body_md||'').slice(0,40).replace(/['\n]/g,' '))}')"><svg viewBox='0 0 24 24'><path d='M20.5 11.7c0 3.9-3.8 7-8.5 7-1 0-2-.15-2.9-.42L4 20l1.5-3.4C4.2 15.3 3.5 13.6 3.5 11.7c0-3.87 3.8-7 8.5-7s8.5 3.13 8.5 7Z'/></svg><span class="wbcount">${fakeN(x.id,2,boost)||'评论'}</span></button>
