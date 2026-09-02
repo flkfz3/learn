@@ -355,7 +355,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-03x';
+const BUILD='2026-09-03y';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -363,6 +363,15 @@ let COURSES={};  // 课程名从数据库取(私有),不写进公开页面
 const KINDZH={term:'术语',concept:'概念',theorem:'定理',trap:'易错',method:'方法'};
 const STZH={stub:'待写',draft:'草稿',done:'成稿'};
 const IS_SHUA=/^\/shua\/?$/.test(location.pathname);
+// 刷有自己的一套图标(同一系列、橙色系)。两个入口共用一个 index.html,所以在这里换掉。
+if(IS_SHUA){
+  const ico=document.querySelector('link[rel=icon]');
+  if(ico) ico.href='data:image/png;base64,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';
+  const app=document.querySelector('link[rel=apple-touch-icon]');
+  if(app) app.href='/shua-180.png';
+  const tc=document.querySelector('meta[name=theme-color]');
+  if(tc) tc.content='#F0912F';
+}
 const WANT=(location.search.match(/[?&]v=([a-z]+)/)||[])[1];
 let sb=null, D={kp:[],lec:[],qa:[],rq:[],sl:[]},
     cur=IS_SHUA?'feed':(WANT||'today'), selDate=todayStr();
