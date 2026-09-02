@@ -329,7 +329,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-02z';
+const BUILD='2026-09-03a';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -894,7 +894,13 @@ function votePoll(id,i,ans){
 }
 /* 写好的 OC 帖子 */
 function ocMenu(key){
+  // 挂了知识库条目的帖子给一个"看完整条目"的出口 —— 刷到一半想深看时不用自己去知识库翻
+  const id=key.startsWith('post:')?key.slice(5):'';
+  const post=(D.fp||[]).find(x=>x.id===id);
+  const kp=post&&post.kp_slug&&D.kp.find(k=>k.slug===post.kp_slug);
   openOv(`<h3>这条帖子</h3>
+   ${kp?`<button class="btn" style="margin-bottom:8px;display:block"
+     onclick="closeOv();openKPslug('${esc(kp.slug)}')">看完整条目：${esc(kp.title_zh||kp.title_en)}</button>`:''}
    <button class="btn" onclick="feedAct(null,'${key}','post','later');closeOv();toast('加进收藏夹')">收藏</button>
    <button class="btn" style="margin-left:8px;background:var(--well);color:var(--ink)"
      onclick="feedNope('${key}','post');closeOv()">不想看这条</button>`);
