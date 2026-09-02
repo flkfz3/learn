@@ -197,6 +197,10 @@ html[data-theme=dark] .wbchip{background:#3a2c1c;color:#ffb066}
   justify-content:center;font-size:11px;color:#fff;font-weight:700}
 .wbcmt .cn{color:var(--wb-blue)}
 .wbcmt .cmore{color:var(--wb-blue);font-size:13px;cursor:pointer;padding:4px 0 1px}
+.wbcmt .row.more{display:none}
+.wbcmt.all .row.more{display:flex}
+.wbcmt .owner{background:var(--wb-org);color:#fff;font-size:10px;border-radius:3px;
+  padding:0 3px;margin-left:4px;vertical-align:1px}
 /* 投票 */
 .wbpoll{border:1px solid var(--wb-line);border-radius:4px;padding:8px 10px;margin:6px 0}
 .wbpoll .opt{display:block;width:100%;text-align:left;border:1px solid var(--wb-line);
@@ -330,7 +334,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-03b';
+const BUILD='2026-09-03c';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -860,14 +864,20 @@ function wbAvatarText(pk,size){
      background:radial-gradient(circle at 30% 25%, ${q.c}dd, ${q.c} 45%, ${q.c}99);
      font-size:${Math.round(s*0.38)}px;text-shadow:0 1px 2px rgba(0,0,0,.25)">${esc(q.av)}</div>`;
 }
-function wbComments(list,key){
+/* 推导帖的分步骨架放在博主**自己的**评论区接楼(微博上真实的行为,比正文里
+   "说明句—居中公式—说明句"那种排版自然得多)。所以要:给博主自己的回复挂「博主」标,
+   并且像真微博一样先只露 3 条,剩下的点开。 */
+function wbComments(list,key,owner){
   if(!list||!list.length)return '';
-  return `<div class="wbcmt">`+list.map(x=>{const q=per(x.author);
-    return `<div class="row">${q.img?`<img class="ca" src="${AVBASE}${q.img}" alt=""
+  const row=(x,i)=>{const q=per(x.author); const mine=owner&&x.author===owner;
+    return `<div class="row${i>=3?' more':''}">${q.img?`<img class="ca" src="${AVBASE}${q.img}" alt=""
         onerror="this.outerHTML='<div class=ca style=background:${q.c}>${esc(q.av)}</div>'">`
        :`<div class="ca" style="background:${q.c}">${esc(q.av)}</div>`}
-      <div><span class="cn">${esc(q.n)}</span>：${md(x.text).replace(/^<p>|<\/p>$/g,'')}</div></div>`;
-  }).join('')+`<div class="cmore" onclick="feedAsk('${esc(key||'')}','')">写条评论</div></div>`;
+      <div><span class="cn">${esc(q.n)}</span>${mine?'<span class="owner">博主</span>':''}：${md(x.text).replace(/^<p>|<\/p>$/g,'')}</div></div>`;};
+  const hid=list.length-3;
+  return `<div class="wbcmt">`+list.map(row).join('')
+    +(hid>0?`<div class="cmore" onclick="this.parentElement.classList.add('all');this.remove()">展开剩余 ${hid} 条</div>`:'')
+    +`<div class="cmore" onclick="feedAsk('${esc(key||'')}','')">写条评论</div></div>`;
 }
 function wbPoll(id,poll){
   if(!poll)return '';
@@ -936,7 +946,7 @@ function ocard(c){
     ${x.figure?`<div class="wbfig">${md(figTex(x.figure.tex))}<span class="cap">${esc(x.figure.cap||'')}</span></div>`:''}
     ${c.due?`<div class="wbfrom" style="margin-top:2px">${dueLabel(c.due)}</div>`:''}
     ${rep}${wbPoll(x.id,x.poll)}
-    ${wbComments(x.seed_comments,c.key)}
+    ${wbComments(x.seed_comments,c.key,x.author)}
     <div class="wbicons">
       <button onclick="rephrase('${esc(x.kp_slug||'')}','${esc(x.topic||'')}','${esc(c.key)}')"><svg viewBox='0 0 24 24'><path d='M4 9.5A3.5 3.5 0 0 1 7.5 6H18'/><path d='M15.5 3.5 18.5 6l-3 2.5'/><path d='M20 14.5a3.5 3.5 0 0 1-3.5 3.5H6'/><path d='M8.5 20.5 5.5 18l3-2.5'/></svg><span class="wbcount">${fakeN(x.id,1,boost)||'转发'}</span></button>
       <button onclick="feedAsk('${esc(c.key)}','${esc((x.body_md||'').slice(0,40).replace(/['\n]/g,' '))}')"><svg viewBox='0 0 24 24'><path d='M20.5 11.7c0 3.9-3.8 7-8.5 7-1 0-2-.15-2.9-.42L4 20l1.5-3.4C4.2 15.3 3.5 13.6 3.5 11.7c0-3.87 3.8-7 8.5-7s8.5 3.13 8.5 7Z'/></svg><span class="wbcount">${(x.seed_comments||[]).length?fakeN(x.id,2,boost):'评论'}</span></button>
