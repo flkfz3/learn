@@ -342,7 +342,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-03j';
+const BUILD='2026-09-03k';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -799,7 +799,11 @@ function pickCards(n, exclude){
     if(!cand.length)break;
     const full=cand.filter(p=>okAuthor(p.c)&&okTopic(p.c)&&okArea(p.c));
     const rich=full.filter(p=>richKind(p.c));
+    // 每 12 张至少 2 张来自知识库(她自己的笔记);位置排到后段还没够就强制补
+    const needKB = out.filter(o=>o.auto).length < Math.round(n/6) && out.length >= n-Math.round(n/3);
+    const kb = needKB && (full.find(p=>p.c.auto) || cand.find(p=>p.c.auto&&okAuthor(p.c)));
     const pick =
+      kb ||
       (plain>=2 && rich.length ? freshest(rich) : null) ||   // 该上花样了：挑最久没露面的那种
       full[0] ||
       cand.find(p=>okAuthor(p.c)&&okTopic(p.c)) ||
