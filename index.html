@@ -50,7 +50,9 @@ header .sp{flex:1}
 html[data-theme=dark]{ --wb-org:#ff9a33; --wb-name:#ff9f7a; --wb-meta:#8f8caa;
        --wb-bg:#15132e; --wb-card:#1d1b38; --wb-line:#2c2a52; --wb-txt:#e8e6f7; --wb-blue:#6fb0ef; }
 
-.wb{background:var(--wb-bg);margin:-16px -14px 0;padding:0 0 40px;color:var(--wb-txt);
+/* 通栏:父容器 .wrap 的左右 padding 在手机上是 8px、桌面 14px,写死负 margin 会溢出 6px。
+   用 100vw 全出血,免疫父级 padding(实测 scrollWidth 396→390)。 */
+.wb{background:var(--wb-bg);width:100vw;margin-left:calc(50% - 50vw);margin-top:-16px;padding:0 0 40px;color:var(--wb-txt);
     font-size:14px;line-height:1.6}
 .wbgrid{display:grid;grid-template-columns:150px minmax(0,1fr) 250px;gap:12px;
     max-width:1180px;margin:0 auto;align-items:start}
@@ -282,7 +284,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-02f';
+const BUILD='2026-09-02g';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
