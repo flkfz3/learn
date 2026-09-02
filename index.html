@@ -329,7 +329,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-02x';
+const BUILD='2026-09-02y';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -363,6 +363,12 @@ function md(s){
   // 数学片段先抽出护住,marked 跑完再放回,否则 \{ \\ _ 会被当 markdown 吃掉
   const store=[];
   s=s.replace(/\$\$[\s\S]+?\$\$|\$[^$\n]+?\$/g,m=>{store.push(m);return '@@MATH'+(store.length-1)+'@@';});
+  // 半角标点在渲染层再兜一道。tools/fix_punct.py 只洗 learn 自己的表,而 feed 里也会拼进
+  // 管家窗口 study_log 这类别人家的记录 —— 不去改别人的数据,在显示时纠正。
+  // 必须放在数学抽走之后:否则 $f(x,y)$、$a[i,j]$ 里的逗号会被一起换掉。
+  const FW={',':'，',';':'；',':':'：','?':'？','!':'！'};
+  s=s.replace(/([一-鿿])([,;:?!])/g,(m,c,q)=>c+FW[q])
+     .replace(/([,;:?!])(?=[一-鿿])/g,q=>FW[q]);
   s=s.replace(/(σ-域|σ-代数|σ-有限|σ-可加|π-系|λ-系|π 系|λ 系|Borel 集|Borel 可测|单调类定理|示性函数|分布函数|概率测度|可测函数|测度论)/g,
               '<span class="nb">$1</span>');
   // 「σ-有限 =」断在行尾、「可数版的有限」掉到下一行 —— 等号两侧短的时候用不断行空格粘住
