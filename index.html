@@ -174,6 +174,7 @@ html[data-theme=dark] .wbchip{background:#3a2c1c;color:#ffb066}
   border-radius:14px;padding:3px 10px;white-space:nowrap;text-decoration:none;line-height:1.9}
 #tabs .gofeed{font-size:14px;color:#fff;background:var(--accent);border-radius:14px;
   padding:4px 12px;text-decoration:none;white-space:nowrap;align-self:center}
+#tabs .tabsep{width:1px;align-self:stretch;margin:4px 4px 4px 2px;background:var(--line);flex:none}
 .wbtabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--wb-card);
   border-top:1px solid var(--wb-line);box-shadow:0 -6px 12px -8px rgba(0,0,0,.28);display:flex;padding:6px 0 8px}
 .wbtabbar button,.wbtabbar .tabbtn{flex:1;border:0;background:none;color:var(--wb-meta);font-size:11px;
@@ -332,7 +333,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
     <button class="iconbtn" onclick="logout()">退出</button>
   </header>
   <nav id="tabs">
-    <a class="gofeed" href="/shua/" title="去刷">刷</a>
+    <a class="gofeed" href="/shua/" title="去刷">刷 ›</a><span class="tabsep"></span>
     <button data-v="today">今日</button>
     <button data-v="courses">课程</button>
     <button data-v="kb">知识库</button>
@@ -354,7 +355,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-03w';
+const BUILD='2026-09-03x';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
