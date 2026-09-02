@@ -80,7 +80,15 @@ html[data-theme=dark] .wbav{background:linear-gradient(135deg,#4a3f7a,#6b5aa8);c
 .wbbadge{font-size:10px;background:var(--wb-org);color:#fff;border-radius:3px;padding:0 3px;line-height:14px}
 .wbfrom{color:var(--wb-meta);font-size:12px;margin-top:2px}
 .wbfrom b{color:var(--wb-blue);font-weight:400}
-.wbtext{margin:7px 0 5px;font-size:15px;line-height:1.6;word-break:break-word}
+.wbtext{margin:7px 0 5px;font-size:15px;line-height:1.6;word-break:break-word;
+  line-break:strict;overflow-wrap:anywhere}
+/* 收起状态按行数裁,不按字符数 —— 否则两行的卡被收起、八行的卡反而全展开(第6轮审查 4) */
+.wbtext.clip{display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.wbtext.clip p:last-child{margin-bottom:0}
+.wbmore2{color:#1a73e8;cursor:pointer;font-size:14px;margin:2px 0 5px;display:none}
+.wbmore2.show{display:block}
+/* 正文里的块级公式也左对齐,不然同一张卡上下两个公式一个居中一个靠左 */
+.wbtext .katex-display{text-align:left;margin:.4em 0}
 .wbtext .katex{font-size:0.95em}
 .wbmoretxt{white-space:nowrap;color:#1a73e8;cursor:pointer;font-size:14px}
 .wbfull{display:none;margin-top:6px;background:var(--wb-bg);border-radius:4px;padding:8px 10px;font-size:14px}
@@ -290,7 +298,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-02k';
+const BUILD='2026-09-02l';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -398,7 +406,7 @@ function render(){
   if(hdr) hdr.style.display = isFeed?'none':'';
   if(tabs)tabs.style.display= isFeed?'none':'flex';
   v.innerHTML=({feed:rFeed,today:rToday,courses:rCourses,kb:rKB,terms:rTerms,hw:rHW,read:rRead,en:rEN,qa:rQA})[cur]();
-  mathify(v);
+  mathify(v); clipScan(v);
 }
 const ORIGIN_ZH={meeting:'组会/会议',qe:'重点复习',course:'课程',paper:'论文',telegram:'随手记',window:'窗口问答',manual:'手动'};
 
@@ -463,25 +471,25 @@ function splitSections(body){
    所以名字按真实微博 ID 的语感取,认证写成微博那种一句话认证,
    来源客户端各不相同("来自 深夜FM客户端"比"来自学习库"像得多)。   */
 const PER={
-  p_num:{n:'P不是一个数',   av:'P', c:'#e8543f', v:'概率论基础区常驻答疑', dev:'微博网页版',
+  p_num:{n:'P不是一个数',   av:'P', img:'p_num.png', c:'#e8543f', v:'概率论基础区常驻答疑', dev:'微博网页版',
          bio:'专治「P 到底是啥」'},
-  meas :{n:'可测但不想营业', av:'测', c:'#7b5ea7', v:'测度论受害人',       dev:'iPhone 15 Pro',
+  meas :{n:'可测但不想营业', av:'测', img:'meas.png', c:'#7b5ea7', v:'测度论受害人',       dev:'iPhone 15 Pro',
          bio:'今天也在被 σ-域管理'},
-  borel:{n:'开区间施工队',   av:'工', c:'#c9760a', v:'Borel 土木工程队',   dev:'工地记账本',
+  borel:{n:'开区间施工队',   av:'工', img:'borel.png', c:'#c9760a', v:'Borel 土木工程队',   dev:'工地记账本',
          bio:'承接各种集合搭建工程'},
-  limsup:{n:'limsup戒断中心',av:'戒', c:'#c2185b', v:'极限行为观察员',     dev:'深夜FM',
+  limsup:{n:'limsup戒断中心',av:'戒', img:'limsup.png', c:'#c2185b', v:'极限行为观察员',     dev:'深夜FM',
          bio:'专治反复横跳的序列'},
-  proof:{n:'证明写不出来bot',av:'稿', c:'#455a64', v:'',                   dev:'草稿纸网页版',
+  proof:{n:'证明写不出来bot',av:'稿', img:'proof.png', c:'#455a64', v:'',                   dev:'草稿纸网页版',
          bio:'不会写,但会拆步骤'},
-  comp :{n:'统计计算废片场', av:'片', c:'#2e7d32', v:'统计计算片场记录员', dev:'RStudio',
+  comp :{n:'统计计算废片场', av:'片', img:'comp.png', c:'#2e7d32', v:'统计计算片场记录员', dev:'RStudio',
          bio:'代码跑了,结果像闹鬼'},
-  night:{n:'亜蘭式夜航电台', av:'FM', c:'#3f6fb5', v:'论文英文慢读频道',   dev:'深夜FM客户端',
+  night:{n:'亜蘭式夜航电台', av:'FM', img:'night.png', c:'#3f6fb5', v:'论文英文慢读频道',   dev:'深夜FM客户端',
          bio:'深夜播放一些看不懂的英文'},
-  horror:{n:'老恐怖片概率馆',av:'馆', c:'#5d4037', v:'冷门海报收藏号',     dev:'胶片扫描仪',
+  horror:{n:'老恐怖片概率馆',av:'馆', img:'horror.png', c:'#5d4037', v:'冷门海报收藏号',     dev:'胶片扫描仪',
          bio:'Karloff 看了也会懂的概率论'},
-  ask  :{n:'今天又问到根上了',av:'问',c:'#00838f', v:'',                   dev:'匿名提问箱',
+  ask  :{n:'今天又问到根上了',av:'问', img:'ask.png',c:'#00838f', v:'',                   dev:'匿名提问箱',
          bio:'收录那些真正卡住人的问题'},
-  paper:{n:'paper先放收藏夹',av:'读',c:'#6d4c41', v:'论文收藏夹管理员',   dev:'知网客户端',
+  paper:{n:'paper先放收藏夹',av:'读', img:'paper.png',c:'#6d4c41', v:'论文收藏夹管理员',   dev:'知网客户端',
          bio:'读不完,但先知道它在干嘛'},
 };
 const PERKEYS=Object.keys(PER);
@@ -516,6 +524,10 @@ function oneSentence(t,limit){
   // 一串等号挤在一行(第4轮审查)。摘要本来就只该给一个钩子。
   const items=t.split('\n').filter(l=>/^\s*[-*]\s+/.test(l));
   if(items.length>1) t=items[0];
+  // 多行短句(每行一个定义)拼成一段会变成"σ-域 = … σ-可加 = … σ-有限 = …"跑马(第6轮审查 6),
+  // 这种源文本只取第一行。
+  const lines=t.split('\n').map(x=>x.trim()).filter(Boolean);
+  if(lines.length>=2 && lines[0].length>=8 && !/[。！？]$/.test(lines[0])) t=lines[0];
   t=t.replace(/\*\*/g,'').replace(/^\s*[-*]\s+/gm,'').replace(/\n+/g,' ').trim();
   // 块级公式整条搬走:摘要里放不下,截断后剩半截 $$ 会让 KaTeX 匹配失败、
   // marked 反而把 \, \frac 当 markdown 吃掉,页面上直接露出 LaTeX 源码(第4轮审查抓到)
@@ -712,10 +724,22 @@ function fakeN(id,salt){
   let h=0; for(let i=0;i<id.length;i++) h=(h*33+id.charCodeAt(i))|0;
   h=Math.abs(h);
   const base=[1,2,3,5,8,13,21,34][h%8]+(h>>3)%5;
-  const n=salt===1?base:salt===2?Math.round(base*(2+(h>>7)%2)):Math.round(base*(8+(h>>11)%9));
+  // 精确 1:2:10 一眼假(第6轮审查),乘一个由 id 决定的 ±25% 抖动
+  const jit=(k)=>0.78+((h>>(k*5))%45)/100;
+  const n=salt===1?base
+        :salt===2?Math.round(base*(2+(h>>7)%2)*jit(2))
+        :Math.round(base*(8+(h>>11)%9)*jit(3));
   return n<3?'':String(n);
 }
 const AVBASE='https://kbcftsexzmxjtlljgcyi.supabase.co/storage/v1/object/public/coursenotes/oc/';
+/* 只有真被裁掉了才显示「展开全文」—— 三行的卡不该挂一个骗人的展开钮 */
+function clipScan(root){
+  (root||document).querySelectorAll('.wbtext.clip').forEach(e=>{
+    const btn=e.nextElementSibling;
+    if(btn&&btn.classList.contains('wbmore2')&&e.scrollHeight>e.clientHeight+2) btn.classList.add('show');
+  });
+}
+function unclip(btn){ btn.previousElementSibling.classList.remove('clip'); btn.style.display='none'; }
 function figTex(t){ t=(t||'').trim(); return /\$/.test(t)?t:('$$'+t+'$$'); }
 function wbAvatar(pk,size){
   const q=per(pk); const s=size||44;
@@ -775,7 +799,8 @@ function ocard(c){
         <div class="wbname">${esc(q.n)}${q.v?'<span class="wbbadge">V</span>':''}</div>
         <div class="wbfrom">${feedAgo(x.posted_at)} · 来自 <b>${esc(q.dev)}</b>${x.hot?'<span class="wbchip">热</span>':''}</div>
       </div></div>
-    <div class="wbtext">${md(x.body_md).replace(/<\/p>\s*$/,(x.full_md?'':'</p>'))}${full}${x.full_md?'</p>':''}</div>
+    <div class="wbtext clip">${md(x.body_md).replace(/<\/p>\s*$/,(x.full_md?'':'</p>'))}${full}${x.full_md?'</p>':''}</div>
+    <div class="wbmore2" onclick="unclip(this)">展开全文</div>
     ${x.figure?`<div class="wbfig">${md(figTex(x.figure.tex))}<span class="cap">${esc(x.figure.cap||'')}</span></div>`:''}
     ${c.due?`<div class="wbfrom" style="margin-top:2px">${dueLabel(c.due)}</div>`:''}
     ${rep}${wbPoll(x.id,x.poll)}
@@ -794,7 +819,7 @@ function rephrase(slug,topic,key){
   const el=document.querySelector(`.wbpost[data-k="${key}"]`); if(!el)return;
   const c={key:'post:'+pick.id,kind:'post',post:pick,per:per(pick.author),at:pick.posted_at,
            quoted:pick.quote_of?(D.fp||[]).find(y=>y.id===pick.quote_of):null};
-  el.insertAdjacentHTML('afterend',ocard(c)); mathify(el.nextElementSibling);
+  el.insertAdjacentHTML('afterend',ocard(c)); mathify(el.nextElementSibling); clipScan(el.parentElement);
   markSeen([{key:c.key,kind:'post'}]);
 }
 function fcard(c){ return ocard(c); }
@@ -844,7 +869,7 @@ function rFeed(){
       <div>
         <div class="wbline"><span>今天 <b>${seenToday}</b> 条</span>
           <span>连着 <b>${streak}</b> 天</span>
-          <span class="r" onclick="reshuffle()">换一批</span></div>
+          ${feedSort==='rec'?'<span class="r" onclick="reshuffle()">换一批</span>':'<span class="r">按时间</span>'}</div>
         <div id="feedlist">${first.map(fcard).join('')}</div>
         <div class="wbend" id="feedmore">正在加载…</div>
       </div>
@@ -916,7 +941,7 @@ function feedObserve(){
     const more2=pickCards(feedBatch, shownKeys);
     if(!more2.length){ document.getElementById('feedmore').textContent='今天的池子见底了 —— 去别的页看看,或者明天再来'; feedIO.disconnect(); return; }
     list.insertAdjacentHTML('beforeend',more2.map(fcard).join(''));
-    mathify(list);
+    mathify(list); clipScan(list);
     markSeen(more2);
   },{rootMargin:'400px'});
   feedIO.observe(more);
