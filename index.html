@@ -316,7 +316,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-02s';
+const BUILD='2026-09-02t';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -352,6 +352,8 @@ function md(s){
   s=s.replace(/\$\$[\s\S]+?\$\$|\$[^$\n]+?\$/g,m=>{store.push(m);return '@@MATH'+(store.length-1)+'@@';});
   s=s.replace(/(σ-域|σ-代数|σ-有限|σ-可加|π-系|λ-系|π 系|λ 系|Borel 集|Borel 可测|单调类定理|示性函数|分布函数|概率测度|可测函数|测度论)/g,
               '<span class="nb">$1</span>');
+  // 「σ-有限 =」断在行尾、「可数版的有限」掉到下一行 —— 等号两侧短的时候用不断行空格粘住
+  s=s.replace(/(\S{1,12}) = (?=\S)/g,'$1\u00a0=\u00a0');
   let html=marked.parse(s,{mangle:false,headerIds:false});
   html=html.replace(/@@MATH(\d+)@@/g,(_,i)=>esc(store[+i]));
   return html;
@@ -552,6 +554,10 @@ function oneSentence(t,limit){
   // 块级公式整条搬走:摘要里放不下,截断后剩半截 $$ 会让 KaTeX 匹配失败、
   // marked 反而把 \, \frac 当 markdown 吃掉,页面上直接露出 LaTeX 源码(第4轮审查抓到)
   t=t.replace(/\$\$[\s\S]*?\$\$/g,' ').replace(/ +/g,' ');
+  // 「σ-域 = … σ-可加 = … σ-有限 = …」这种并列定义串挤成一段读起来像漏了标点,
+  // 摘要只留第一条(确认轮)
+  const eqs=[...t.matchAll(/\s=\s/g)];
+  if(eqs.length>=2) t=t.slice(0,eqs[1].index).replace(/[\s，,、]+\S*$/,'');
   const m=t.match(/^[\s\S]{10,}?[。;;!?!?]/);
   let out=m?m[0]:t;
   if(out.length>limit) out=out.slice(0,limit)+'…';
@@ -588,10 +594,20 @@ function autoPost(o){
   return {key:o.key, kind:'post', level:o.level||1, per:per(author), at:o.at, hot:!!o.hot,
     slug:o.slug, lecId:o.lecId, auto:true,
     post:{id:o.key.replace(/[^a-zA-Z0-9]/g,'').slice(0,24), author, posted_at:o.at, hot:!!o.hot,
-      body_md:(o.head?('**'+o.head+'** '):'')+(o.text||''),
+      body_md:headPlus(o.head,o.text),
       full_md:(o.full && o.full.length>(o.text||'').length+8)?o.full:null,
       seed_comments:[], poll:null, figure:null,
       topic:o.kind, kp_slug:o.slug||null, quote:o.quote||''}};
+}
+/* 提要行是从同一段源文本抽的,经常和正文第一句一字不差(确认轮抓到:
+   「σ-域的 P3 是测度公理 A3 的前提」提要行和正文首句完全重复)。重了就只留正文。 */
+function headPlus(head,text){
+  text=text||'';
+  if(!head) return text;
+  const norm=x=>(x||'').replace(/[\s*·。,，:：]/g,'');
+  const h=norm(head), t=norm(text);
+  if(h && (t.startsWith(h.slice(0,20)) || h.startsWith(t.slice(0,20)))) return text;
+  return '**'+head+'** '+text;
 }
 function buildFeed(){
   buildFeedSeen();
@@ -716,25 +732,27 @@ function pickCards(n, exclude){
               .sort((a,b)=>new Date(b.at||0)-new Date(a.at||0)).slice(0,n);
   }
   const pool=src.map(c=>({c,w:feedWeight(c)})).sort((a,b)=>b.w-a.w);
-  // 纯按权重取会出现同一个人设连发五条(第4轮审查:整屏都是「可测但不想营业」)。
-  // 取的时候跳过最近两条已用过的作者,实在没别人可用再放行。
-  // 从 1 起步:第二张卡就优先给有花样的。首屏是第一印象,不能两张同构文字砖(第8轮审查 P2)
-  const out=[]; const used=new Set(); const rest=[]; let plain=1, lastRich='';
+  /* 两条硬约束,权重只在满足约束的候选里挑最高的:
+       1. 同一个人设不能连着占最近两张(第4轮:整屏都是「可测但不想营业」)
+       2. 素卡最多连两张,第三张必须有花样,而且换一种花样
+          (确认轮:滚到第三屏时 12 张全是知识库自动卡,零评论区零公式卡零转发)
+     约束满足不了才降级,而不是先塞满再补 —— 原来的两遍写法在池子后段必然退化成全素卡。 */
+  const out=[]; const used=new Set();
   const au=c=>c.post?c.post.author:(c.per&&c.per.n)||'';
-  for(let pass=0; pass<2 && out.length<n; pass++){
-    for(const p of (pass?rest:pool)){
-      if(out.length>=n)break;
-      if(used.has(p.c.key))continue;
-      if(!pass){
-        if(out.slice(-2).some(o=>au(o)===au(p.c))){ rest.push(p); continue; }
-        const rk=richKind(p.c);
-        if(plain>=2 && !rk){ rest.push(p); continue; }        // 连两张素卡后优先给有花样的
-        // 花样也要轮着来:公式卡权重高,不轮换的话前 12 张全是公式卡,转发/投票一次都露不出来
-        if(rk && rk===lastRich){ rest.push(p); continue; }
-      }
-      const k2=richKind(p.c);
-      used.add(p.c.key); out.push(p.c); plain=k2?0:plain+1; if(k2)lastRich=k2;
-    }
+  let plain=1, lastRich='';                 // 从 1 起步:第二张就该有花样,首屏是第一印象
+  const okAuthor=c=>!out.slice(-2).some(o=>au(o)===au(c));
+  while(out.length<n){
+    const cand=pool.filter(p=>!used.has(p.c.key));
+    if(!cand.length)break;
+    const pick =
+      (plain>=2 && cand.find(p=>okAuthor(p.c) && richKind(p.c) && richKind(p.c)!==lastRich)) ||
+      (plain>=2 && cand.find(p=>okAuthor(p.c) && richKind(p.c))) ||
+      cand.find(p=>okAuthor(p.c) && richKind(p.c)!==lastRich) ||
+      cand.find(p=>okAuthor(p.c)) ||
+      cand[0];
+    const rk=richKind(pick.c);
+    used.add(pick.c.key); out.push(pick.c);
+    plain=rk?0:plain+1; if(rk)lastRich=rk;
   }
   return out;
 }
@@ -886,7 +904,7 @@ function ocard(c){
     ${wbComments(x.seed_comments,c.key)}
     <div class="wbicons">
       <button onclick="rephrase('${esc(x.kp_slug||'')}','${esc(x.topic||'')}','${esc(c.key)}')"><svg viewBox='0 0 24 24'><path d='M4 9.5A3.5 3.5 0 0 1 7.5 6H18'/><path d='M15.5 3.5 18.5 6l-3 2.5'/><path d='M20 14.5a3.5 3.5 0 0 1-3.5 3.5H6'/><path d='M8.5 20.5 5.5 18l3-2.5'/></svg><span class="wbcount">${fakeN(x.id,1,boost)||'转发'}</span></button>
-      <button onclick="feedAsk('${esc(c.key)}','${esc((x.body_md||'').slice(0,40).replace(/['\n]/g,' '))}')"><svg viewBox='0 0 24 24'><path d='M20.5 11.7c0 3.9-3.8 7-8.5 7-1 0-2-.15-2.9-.42L4 20l1.5-3.4C4.2 15.3 3.5 13.6 3.5 11.7c0-3.87 3.8-7 8.5-7s8.5 3.13 8.5 7Z'/></svg><span class="wbcount">${fakeN(x.id,2,boost)||'评论'}</span></button>
+      <button onclick="feedAsk('${esc(c.key)}','${esc((x.body_md||'').slice(0,40).replace(/['\n]/g,' '))}')"><svg viewBox='0 0 24 24'><path d='M20.5 11.7c0 3.9-3.8 7-8.5 7-1 0-2-.15-2.9-.42L4 20l1.5-3.4C4.2 15.3 3.5 13.6 3.5 11.7c0-3.87 3.8-7 8.5-7s8.5 3.13 8.5 7Z'/></svg><span class="wbcount">${(x.seed_comments||[]).length?fakeN(x.id,2,boost):'评论'}</span></button>
       <button class="${r.liked?'on':''}" onclick="feedAct(this,'${esc(c.key)}','post','like')"><svg viewBox='0 0 24 24'><path d='M7 21V10.5l4.2-7a1.9 1.9 0 0 1 3.4 1.7L13.3 9.5H19a2 2 0 0 1 2 2.35l-1.3 6.8A2.6 2.6 0 0 1 17.1 21Z'/><rect x='3' y='10.5' width='4' height='10.5' rx='1'/></svg><span class="wbcount">${fakeN(x.id,3,boost)||'赞'}</span></button>
     </div></div>`;
 }
