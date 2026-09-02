@@ -266,7 +266,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-02a';
+const BUILD='2026-09-02b';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -595,7 +595,8 @@ function buildFeed(){
     from:(COURSES[h.course_code]||h.course_code),
     head:h.title+' · '+(h.exercises||''), text:'', due:h.due_at, pin:true}));
 
-  FEED=C.filter(c=>(c.text&&c.text.length>1)||c.quiz||c.due);
+  // 写好的 OC 帖走 c.post,没有 c.text —— 少了第一个条件会被这行整批丢掉(实测 43 条全没了)
+  FEED=C.filter(c=>c.kind==='post'||(c.text&&c.text.length>1)||c.quiz||c.due);
   feedShown=0;
 }
 /* 权重:基础优先 + 看过衰减 + 久未见回升 + 抖动 */
