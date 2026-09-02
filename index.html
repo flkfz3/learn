@@ -316,7 +316,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-02r';
+const BUILD='2026-09-02s';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -766,10 +766,20 @@ function fakeN(id,salt,boost){
 const AVBASE='https://kbcftsexzmxjtlljgcyi.supabase.co/storage/v1/object/public/coursenotes/oc/';
 /* 只有真被裁掉了才显示「展开全文」—— 三行的卡不该挂一个骗人的展开钮 */
 function fitFig(root){
-  (root||document).querySelectorAll('.wbfig').forEach(e=>{
+  const R=root||document;
+  R.querySelectorAll('.wbfig').forEach(e=>{
     e.style.fontSize='';
     for(let px=17; px>=11.5 && e.scrollWidth>e.clientWidth+1; px-=0.75) e.style.fontSize=px+'px';
     e.classList.toggle('scrolls', e.scrollWidth>e.clientWidth+1);
+  });
+  // 正文里的块级公式也会超宽。它外面是按行数裁的 .clip(overflow:hidden),
+  // 横向也一起裁掉 —— 屏幕上就是等号被从中间切成两半(第9轮审查)。所以只能缩,不能靠滚。
+  R.querySelectorAll('.wbtext .katex-display, .wbcmt .katex-display').forEach(e=>{
+    const box=e.parentElement && e.closest('.wbtext,.wbcmt'); if(!box)return;
+    const inner=e.querySelector('.katex'); if(!inner)return;
+    e.style.fontSize='';
+    for(let px=100; px>=62 && inner.getBoundingClientRect().width>box.clientWidth-2; px-=4)
+      e.style.fontSize=px+'%';
   });
 }
 function clipScan(root){
