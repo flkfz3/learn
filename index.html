@@ -50,10 +50,11 @@ header .sp{flex:1}
 html[data-theme=dark]{ --wb-org:#ff9a33; --wb-name:#ff9f7a; --wb-meta:#8f8caa;
        --wb-bg:#15132e; --wb-card:#1d1b38; --wb-line:#2c2a52; --wb-txt:#e8e6f7; --wb-blue:#6fb0ef; }
 
-.wb{background:var(--wb-bg);margin:-16px -14px 0;padding:0 12px 40px;color:var(--wb-txt);
+.wb{background:var(--wb-bg);margin:-16px -14px 0;padding:0 0 40px;color:var(--wb-txt);
     font-size:14px;line-height:1.6}
 .wbgrid{display:grid;grid-template-columns:150px minmax(0,1fr) 250px;gap:12px;
     max-width:1180px;margin:0 auto;align-items:start}
+@media(max-width:1000px){.wbgrid{gap:0}}
 @media(max-width:1000px){ .wbgrid{grid-template-columns:minmax(0,1fr)} .wbside{display:none} }
 .wbbox{background:var(--wb-card);border-radius:6px;padding:10px 12px;margin-bottom:10px;
     border:1px solid var(--wb-line)}
@@ -66,7 +67,7 @@ html[data-theme=dark]{ --wb-org:#ff9a33; --wb-name:#ff9f7a; --wb-meta:#8f8caa;
 .wbnav a .c{float:right;color:var(--wb-meta);font-size:12px;font-weight:400}
 /* 微博手机端是通栏白卡:无圆角、无左右边距,只靠灰带分隔(视觉审查 P0-3) */
 .wbpost{background:var(--wb-card);border:0;border-top:1px solid var(--wb-line);border-radius:0;
-    padding:11px 14px 0;margin:0 -12px 8px}
+    padding:11px 14px 0;margin:0 0 8px}
 .wbtop{display:flex;gap:10px}
 /* 纯平色圆像企业微信默认头像,加一层渐变才有点真实感 */
 .wbav{width:44px;height:44px;border-radius:50%;flex:none;display:flex;align-items:center;
@@ -120,7 +121,7 @@ html[data-theme=dark] .wbchip{background:#3a2c1c;color:#ffb066}
 .wblink{color:var(--wb-blue);font-size:13px;margin-right:12px;cursor:pointer}
 /* 手机版:整页当成微博 App —— 顶栏 + 流 + 底部四个 tab */
 .wbbar{position:sticky;top:0;z-index:20;background:var(--wb-card);border-bottom:1px solid var(--wb-line);
-  display:flex;align-items:center;gap:12px;padding:8px 12px;margin:0 -12px 10px}
+  display:flex;align-items:center;gap:12px;padding:8px 14px;margin:0 0 8px}
 .wbbar .me{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#ffd9b0,#ffb066);
   display:flex;align-items:center;justify-content:center;font-size:13px;color:#7a4a12;font-weight:700}
 .wbbar .tabs{flex:1;display:flex;gap:16px;overflow-x:auto;scrollbar-width:none}
@@ -168,7 +169,7 @@ html[data-theme=dark] .wbchip{background:#3a2c1c;color:#ffb066}
 .wbpoll .opt.wrong{border-color:#c62828;color:#c62828}
 .wbpoll .ex{font-size:13px;color:var(--wb-meta);margin-top:6px;display:none}
 .wbcount{font-size:12px;color:#6b6b6b;margin-left:3px}
-.wbline{font-size:12px;color:#6b6b6b;padding:5px 2px 7px;display:flex;gap:12px;align-items:center}
+.wbline{font-size:12px;color:#6b6b6b;padding:5px 14px 7px;display:flex;gap:12px;align-items:center}
 .wbline .r{margin-left:auto;color:var(--wb-org);cursor:pointer}
 
 
@@ -281,7 +282,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-02e';
+const BUILD='2026-09-02f';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
