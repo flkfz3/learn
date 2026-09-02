@@ -168,6 +168,10 @@ html[data-theme=dark] .wbchip{background:#3a2c1c;color:#ffb066}
 .wbbar .tabs span.on{color:var(--wb-txt);font-weight:700;position:relative}
 .wbbar .tabs span.on::after{content:'';position:absolute;left:50%;transform:translateX(-50%);bottom:1px;width:20px;height:3px;border-radius:2px;background:#ff5a5f}
 .wbbar .ic{font-size:17px;color:var(--wb-txt);cursor:pointer;background:none;border:0}
+/* 刷页藏了 header 和 #tabs,底部 tab bar 又只在窄屏显示 —— 桌面上会没有任何出口。
+   这个按钮在所有宽度都在。 */
+.wbbar .ic.back{font-size:13px;color:var(--wb-blue);border:1px solid var(--wb-line);
+  border-radius:14px;padding:3px 10px;white-space:nowrap}
 .wbtabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--wb-card);
   border-top:1px solid var(--wb-line);box-shadow:0 -6px 12px -8px rgba(0,0,0,.28);display:flex;padding:6px 0 8px}
 .wbtabbar button{flex:1;border:0;background:none;color:var(--wb-meta);font-size:11px;cursor:pointer;
@@ -348,7 +352,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-03s';
+const BUILD='2026-09-03t';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -1096,6 +1100,7 @@ function rFeed(){
         <span class="${feedSort==='rec'?'on':''}" onclick="setSort('rec')">推荐</span></div>
       <button class="ic" onclick="reshuffle()" title="换一批"><svg viewBox="0 0 24 24" width="19" height="19"
         fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></button>
+      <button class="ic back" onclick="goTab('today')" title="回学习台">学习台</button>
     </div>
     <div class="wbgrid">
       <div class="wbside"><div class="wbbox wbnav"><h4>首页</h4>${nav}</div></div>
