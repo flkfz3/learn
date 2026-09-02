@@ -348,7 +348,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-03p';
+const BUILD='2026-09-03q';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -393,7 +393,11 @@ function md(s){
               '<span class="nb">$1</span>');
   // 「σ-有限 =」断在行尾、「可数版的有限」掉到下一行 —— 等号两侧短的时候用不断行空格粘住
   s=s.replace(/(\S{1,12}) = (?=\S)/g,'$1\u00a0=\u00a0');
-  let html=marked.parse(s,{mangle:false,headerIds:false});
+  // breaks:true —— 单个换行渲染成 <br>。不加的话 markdown 会把
+  // 「P3（σ-域）：…\nA3（测度）：…」并成一段,折行时 A3 的标签黏在上一条的加粗尾巴后面,
+  // 屏上读成「不要求不交 A3」—— 一个关于 A3 的错误论断(实拍两张卡都栽了)。
+  // 微博式的短句正文本来就是靠换行分条的,单换行必须当断行。
+  let html=marked.parse(s,{mangle:false,headerIds:false,breaks:true});
   html=html.replace(/@@MATH(\d+)@@/g,(_,i)=>esc(store[+i]));
   return html;
 }
