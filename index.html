@@ -342,7 +342,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-03l';
+const BUILD='2026-09-03m';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -801,7 +801,9 @@ function pickCards(n, exclude){
     const full=cand.filter(p=>okAuthor(p.c)&&okTopic(p.c)&&okArea(p.c));
     const rich=full.filter(p=>richKind(p.c));
     // 每 12 张至少 2 张来自知识库(她自己的笔记);位置排到后段还没够就强制补
-    const needKB = out.filter(o=>o.auto).length < Math.round(n/6) && out.length >= n-Math.round(n/3);
+    // 自动卡都是素卡,配额硬插会造出三张素卡连排(实测最长素卡连续 2→3)。
+    // 只在"下一张本来就可以是素卡"的位置补。
+    const needKB = plain<2 && out.filter(o=>o.auto).length < Math.round(n/6) && out.length >= n-Math.round(n/2);
     const kb = needKB && (full.find(p=>p.c.auto) || cand.find(p=>p.c.auto&&okAuthor(p.c)));
     const pick =
       kb ||
