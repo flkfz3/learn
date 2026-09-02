@@ -274,6 +274,11 @@ nav button.on{color:var(--ink);font-weight:600;border-bottom-color:var(--accent)
 .md pre code{background:none;padding:0}
 .md blockquote{border-left:3px solid var(--accent);padding-left:10px;color:var(--muted);margin:.5em 0}
 .md table{border-collapse:collapse;display:block;overflow-x:auto}
+/* 讲义/知识点里的配图:满栏、圆角、深色模式下压一点亮度免得刺眼 */
+.md img{display:block;width:100%;max-width:640px;height:auto;margin:10px auto;border-radius:8px;
+  border:1px solid var(--line)}
+html[data-theme=dark] .md img{filter:brightness(.92)}
+.md img+em{display:block;text-align:center;font-size:12.5px;color:var(--muted);margin:-4px 0 12px}
 .md td,.md th{border:1px solid var(--line);padding:3px 9px;font-size:13.5px}
 .muted{color:var(--muted);font-size:13px}
 .empty{color:var(--faint);font-size:13px;padding:8px 0}
@@ -355,7 +360,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-03z';
+const BUILD='2026-09-04a';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
