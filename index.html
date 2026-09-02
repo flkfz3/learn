@@ -93,9 +93,12 @@ html[data-theme=dark] .wbav{background:linear-gradient(135deg,#4a3f7a,#6b5aa8);c
 .wbtext th{background:var(--wb-bg);font-weight:600}
 /* 代码块同理:.md pre 只管知识库页,feed 里的 ```julia``` 原来是裸 pre(无底色无内边距) */
 .wbtext pre{background:var(--wb-bg);border:1px solid var(--wb-line);border-radius:6px;
-  padding:9px 11px;margin:7px 0;overflow-x:auto;width:100%;font-size:12.5px;line-height:1.55}
+  padding:9px 11px;margin:7px 0;overflow-x:auto;width:100%;font-size:13.5px;line-height:1.6}
 .wbtext pre code{background:none;padding:0}
-.wbtext code{background:var(--wb-bg);padding:1px 4px;border-radius:3px;font-size:.92em}
+.wbtext code{background:var(--wb-bg);padding:1px 3px;border-radius:3px;font-size:.9em;margin:0}
+/* 行内公式不许在 + − = 后面断行(实拍:λ(ℚ) = 0 + / 0 + 0 + ⋯ = 0 被劈成两行) */
+.wbtext .katex{white-space:nowrap}
+.wbtext .katex-display .katex{white-space:normal}
 /* 等宽字体里没有中文字形,中文会掉到别的 face 上,字重字距和正文对不上(第8轮审查 P4) */
 code,pre,kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"PingFang SC","Microsoft YaHei",monospace}
 /* 收起状态按行数裁,不按字符数 —— 否则两行的卡被收起、八行的卡反而全展开(第6轮审查 4) */
@@ -326,7 +329,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-02v';
+const BUILD='2026-09-02x';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -390,7 +393,7 @@ async function sendLink(){
   const email=document.getElementById('email').value.trim();
   if(!email)return;
   const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.href.split('#')[0]}});
-  document.getElementById('loginmsg').textContent=error?('失败: '+error.message):'链接已发,去邮箱点开';
+  document.getElementById('loginmsg').textContent=error?('失败：'+error.message):'链接已发，去邮箱点开';
 }
 async function logout(){await sb.auth.signOut();location.reload();}
 let booted=false;
@@ -432,7 +435,7 @@ function render(){
   // 刷页本来每张卡就有「提问」按钮,直接藏掉。
   const fab=document.getElementById('fab');
   if(fab) fab.style.display = (cur==='feed') ? 'none' : '';
-  // 顶部 app 头 + 标签栏在刷页整个让位:视觉审查说"身子像微博,头还像设置页"
+  // 顶部 app 头 + 标签栏在刷页整个让位:视觉审查说"身子像微博，头还像设置页"
   const isFeed = (cur==='feed');
   const hdr=document.querySelector('header'), tabs=document.getElementById('tabs');
   if(hdr) hdr.style.display = isFeed?'none':'';
@@ -499,7 +502,7 @@ function splitSections(body){
   return out;
 }
 /* ===== OC 人设:每个账号有固定的领域、腔调、认证、发布客户端 =====
-   设计意图:她说"用户名不能是 DDL 姬那种,太无聊,仿真性高一点"。
+   设计意图:她说"用户名不能是 DDL 姬那种，太无聊，仿真性高一点"。
    所以名字按真实微博 ID 的语感取,认证写成微博那种一句话认证,
    来源客户端各不相同("来自 深夜FM客户端"比"来自学习库"像得多)。   */
 const PER={
@@ -512,9 +515,9 @@ const PER={
   limsup:{n:'limsup戒断中心',av:'戒', img:'limsup.png', c:'#c2185b', v:'极限行为观察员',     dev:'深夜FM',
          bio:'专治反复横跳的序列'},
   proof:{n:'证明写不出来bot',av:'稿', img:'proof.png', c:'#455a64', v:'',                   dev:'草稿纸网页版',
-         bio:'不会写,但会拆步骤'},
+         bio:'不会写，但会拆步骤'},
   comp :{n:'统计计算废片场', av:'片', img:'comp.png', c:'#2e7d32', v:'统计计算片场记录员', dev:'RStudio',
-         bio:'代码跑了,结果像闹鬼'},
+         bio:'代码跑了，结果像闹鬼'},
   night:{n:'亜蘭式夜航电台', av:'FM', img:'night.png', c:'#3f6fb5', v:'论文英文慢读频道',   dev:'深夜FM客户端',
          bio:'深夜播放一些看不懂的英文'},
   horror:{n:'老恐怖片概率馆',av:'馆', img:'horror.png', c:'#5d4037', v:'冷门海报收藏号',     dev:'胶片扫描仪',
@@ -522,7 +525,7 @@ const PER={
   ask  :{n:'今天又问到根上了',av:'问', img:'ask.png',c:'#00838f', v:'',                   dev:'匿名提问箱',
          bio:'收录那些真正卡住人的问题'},
   paper:{n:'paper先放收藏夹',av:'读', img:'paper.png',c:'#6d4c41', v:'论文收藏夹管理员',   dev:'知网客户端',
-         bio:'读不完,但先知道它在干嘛'},
+         bio:'读不完，但先知道它在干嘛'},
 };
 const PERKEYS=Object.keys(PER);
 function per(k){ return PER[k]||{n:k,av:'学',c:'#888',v:'',dev:'微博网页版',bio:''}; }
@@ -552,7 +555,7 @@ function oneSentence(t,limit){
      .filter(l=>!/^\s*\|/.test(l) && !/^\s*#{1,6}\s/.test(l) && !/^\s*```/.test(l)
                 && !/^\s*[-*]{3,}\s*$/.test(l) && !/^\s*\|?[\s:-]+\|/.test(l))
      .join('\n');
-  // 列表只取第一条:三个并列定义被 \n→空格 压成一段,读起来是"σ-域 = … σ-可加 = … σ-有限 = …"
+  // 列表只取第一条：三个并列定义被 \n→空格 压成一段，读起来是"σ-域 = … σ-可加 = … σ-有限 = …"
   // 一串等号挤在一行(第4轮审查)。摘要本来就只该给一个钩子。
   const items=t.split('\n').filter(l=>/^\s*[-*]\s+/.test(l));
   if(items.length>1) t=items[0];
@@ -561,10 +564,10 @@ function oneSentence(t,limit){
   const lines=t.split('\n').map(x=>x.trim()).filter(Boolean);
   if(lines.length>=2 && lines[0].length>=8 && !/[。！？]$/.test(lines[0])) t=lines[0];
   t=t.replace(/\*\*/g,'').replace(/^\s*[-*]\s+/gm,'').replace(/\n+/g,' ').trim();
-  // 块级公式整条搬走:摘要里放不下,截断后剩半截 $$ 会让 KaTeX 匹配失败、
-  // marked 反而把 \, \frac 当 markdown 吃掉,页面上直接露出 LaTeX 源码(第4轮审查抓到)
+  // 块级公式整条搬走：摘要里放不下，截断后剩半截 $$ 会让 KaTeX 匹配失败、
+  // marked 反而把 \, \frac 当 markdown 吃掉，页面上直接露出 LaTeX 源码(第4轮审查抓到)
   t=t.replace(/\$\$[\s\S]*?\$\$/g,' ').replace(/ +/g,' ');
-  // 「σ-域 = … σ-可加 = … σ-有限 = …」这种并列定义串挤成一段读起来像漏了标点,
+  // 「σ-域 = … σ-可加 = … σ-有限 = …」这种并列定义串挤成一段读起来像漏了标点，
   // 摘要只留第一条(确认轮)
   const eqs=[...t.matchAll(/\s=\s/g)];
   if(eqs.length>=2) t=t.slice(0,eqs[1].index).replace(/[\s，,、]+\S*$/,'');
@@ -575,7 +578,7 @@ function oneSentence(t,limit){
   if((out.match(/\$/g)||[]).length%2) out=out.replace(/\$[^$]*$/,'');
   return out.trim();
 }
-/* 从正文里挖"常见错 / 坑 / 注意"这类小节,拆成一条一条的翻车预警 */
+/* 从正文里挖"常见错 / 坑 / 注意"这类小节，拆成一条一条的翻车预警 */
 function trapItems(body){
   if(!body)return [];
   const out=[];
@@ -587,7 +590,7 @@ function trapItems(body){
   });
   return out;
 }
-/* 写好的 OC 帖子 = 主内容源;原来那套从知识库自动拼的降级成补充 */
+/* 写好的 OC 帖子 = 主内容源；原来那套从知识库自动拼的降级成补充 */
 function postCards(){
   const byId={}; (D.fp||[]).forEach(x=>byId[x.id]=x);
   return (D.fp||[]).map(x=>({
@@ -596,21 +599,21 @@ function postCards(){
     hot:!!x.hot, slug:x.kp_slug, quoted: x.quote_of? byId[x.quote_of] : null,
   }));
 }
-/* 把知识库自动拼出来的卡,包装成和写好的 OC 帖同一种结构 —— 否则同一个 feed 里
-   会出现两套按钮文案、两套展开控件、两套数学渲染(视觉审查 P0-A 抓到的)。 */
+/* 把知识库自动拼出来的卡，包装成和写好的 OC 帖同一种结构 —— 否则同一个 feed 里
+   会出现两套按钮文案、两套展开控件、两套数学渲染(视觉审查 P0-A 抓到的)。*/
 const AUTO_PER={term:'borel',kp:'meas',lec:'p_num',en:'night',read:'paper',qa:'ask',note:'ask'};
 function autoPost(o){
   const author = (o.kind==='lec' && /8060/.test(o.from||'')) ? 'comp' : (AUTO_PER[o.kind]||'p_num');
   return {key:o.key, kind:'post', level:o.level||1, per:per(author), at:o.at, hot:!!o.hot,
     slug:o.slug, lecId:o.lecId, auto:true,
     post:{id:o.key.replace(/[^a-zA-Z0-9]/g,'').slice(0,24), author, posted_at:o.at, hot:!!o.hot,
-      body_md:headPlus(o.head,o.text),
-      full_md:(o.full && o.full.length>(o.text||'').length+8)?o.full:null,
+      body_md:headPlus(o.head, o.full||o.text||''),
+      full_md:null,
       seed_comments:[], poll:null, figure:null,
       topic:o.kind, kp_slug:o.slug||null, quote:o.quote||''}};
 }
-/* 提要行是从同一段源文本抽的,经常和正文第一句一字不差(确认轮抓到:
-   「σ-域的 P3 是测度公理 A3 的前提」提要行和正文首句完全重复)。重了就只留正文。 */
+/* 提要行是从同一段源文本抽的，经常和正文第一句一字不差(确认轮抓到：
+   「σ-域的 P3 是测度公理 A3 的前提」提要行和正文首句完全重复)。重了就只留正文。*/
 function headPlus(head,text){
   text=text||'';
   if(!head) return text;
@@ -623,19 +626,19 @@ function buildFeed(){
   buildFeedSeen();
   const C=postCards(); const raw=[]; const push=o=>raw.push(o);
 
-  /* ---- 一句话帖:每个知识点的定调句,读完 2 秒 ---- */
+  /* ---- 一句话帖：每个知识点的定调句，读完 2 秒 ---- */
   D.kp.filter(k=>k.kind!=='term').forEach(k=>{
     const one=(k.body_md||'').match(/\*\*一句话[:：]\*\*\s*([\s\S]*?)(?:\n\n|$)/);
     const per=k.origin==='course'?PERSONA.m8170:PERSONA.term;
     if(one) push({key:'kp1:'+k.slug, kind:'kp', level:1, per, at:k.updated_at,
       from:k.title_zh||k.slug, head:k.title_zh||k.slug,
       text:oneSentence(one[1],110), full:one[1], slug:k.slug});
-    /* ---- 翻车预警:把"常见错"拆成一条一条 ---- */
+    /* ---- 翻车预警：把"常见错"拆成一条一条 ---- */
     trapItems(k.body_md).forEach((t,i)=>push({
       key:'trap:'+k.slug+':'+i, kind:'kp', level:2, per:PERSONA.trap, at:k.updated_at,
       from:k.title_zh||k.slug, head:'这里很多人栽过',
       text:oneSentence(t,120), full:t, slug:k.slug, hot:1}));
-    /* ---- 展开帖:小节标题当钩子,正文折起来 ---- */
+    /* ---- 展开帖：小节标题当钩子，正文折起来 ---- */
     splitSections(k.body_md).forEach(sec=>{
       if(!sec.title)return;
       push({key:'kp:'+k.slug+':'+sec.i, kind:'kp',
@@ -645,7 +648,7 @@ function buildFeed(){
     });
   });
 
-  /* ---- 课堂要点:老师人格 + 要点一句话 ---- */
+  /* ---- 课堂要点：老师人格 + 要点一句话 ---- */
   D.lec.forEach(l=>(l.key_points||[]).forEach((kp,i)=>push({
     key:'lkp:'+l.id+':'+i, kind:'lec', level:kp.importance>=3?2:1,
     per:personaFor(l.course_code), at:l.lecture_date+'T12:00:00Z',
@@ -653,17 +656,17 @@ function buildFeed(){
     head:kp.title_zh||kp.title_en||'', text:oneSentence(kp.summary_zh,120),
     full:kp.summary_zh, lecId:l.id, hot:kp.importance>=3?1:0})));
 
-  /* ---- 术语:一句话解释,四分之一变成投票式测验 ---- */
+  /* ---- 术语：一句话解释，四分之一变成投票式测验 ---- */
   D.kp.filter(k=>k.kind==='term').forEach(k=>{
     const quiz = k.title_en && k.title_zh && (hashDay(k.slug)%4===0);
     push({key:'term:'+k.slug, kind:'term', level:1, per:PERSONA.term, at:k.updated_at,
-      from:'术语', head: quiz? ('“'+k.title_zh+'”英文怎么说?') : (k.title_en+' · '+k.title_zh),
+      from:'术语', head: quiz? ('“'+k.title_zh+'”英文怎么说？') : (k.title_en+' · '+k.title_zh),
       text: quiz? '' : oneSentence(k.body_md,100),
       full: quiz? ('**'+k.title_en+'**\n\n'+(mdFirstPara(k.body_md)||'')) : k.body_md,
       quiz, slug:k.slug});
   });
 
-  /* ---- 单词精:有词源/钩子的才发,这类是"爽点" ---- */
+  /* ---- 单词精：有词源/钩子的才发，这类是"爽点" ---- */
   (D.en||[]).forEach(e=>{
     const nm=(e.note_md||'');
     const hasTable=/^\s*\|/m.test(nm.split('\n\n')[0]||'');
@@ -675,14 +678,14 @@ function buildFeed(){
       hot:hook?1:0});
   });
 
-  /* ---- 论文墙:转发式(引文块放摘要) ---- */
+  /* ---- 论文墙：转发式(引文块放摘要) ---- */
   (D.rq||[]).filter(r=>r.status!=='done').forEach(r=>push({
     key:'read:'+r.id, kind:'read', level:1, per:PERSONA.paper, at:r.created_at,
     from:r.recommender||'待读', head:'有人推荐你读这篇',
     text:oneSentence(r.title,90), quote:oneSentence(r.note,140), full:r.note,
     link:r.link}));
 
-  /* ---- 过去的你:自我相关,最强停留点 ---- */
+  /* ---- 过去的你：自我相关，最强停留点 ---- */
   (D.qa||[]).forEach(q=>push({
     key:'qa:'+q.id, kind:'qa', level:1, per:PERSONA.past, at:q.asked_at,
     from:(q.window_name||'')+'窗口', head:'你问过这个',
@@ -693,7 +696,7 @@ function buildFeed(){
     from:t.category||'笔记', head:'', text:oneSentence(t.takeaway,120),
     full:t.takeaway, link:t.link}));
 
-  /* 作业倒计时也走 OC 渲染,否则同屏会出现两套按钮文案(视觉审查抓到的) */
+  /* 作业倒计时也走 OC 渲染，否则同屏会出现两套按钮文案(视觉审查抓到的) */
   (D.hw||[]).filter(h=>h.due_at && new Date(h.due_at)>new Date()).forEach(h=>push({
     key:'hw:'+h.id, kind:'post', level:1, per:per('proof'), at:h.created_at, pin:true,
     post:{id:'hw-'+h.id, author:'proof', posted_at:h.created_at, hot:false,
@@ -707,7 +710,7 @@ function buildFeed(){
   FEED=C;
   feedShown=0;
 }
-/* 权重:基础优先 + 看过衰减 + 久未见回升 + 抖动 */
+/* 权重：基础优先 + 看过衰减 + 久未见回升 + 抖动 */
 function feedWeight(c){
   const r=feKey(c.key), now=Date.now();
   let w = c.pin?40 : ({post:3.2,term:.5,kp:.5,lec:.6,en:.5,read:.5,qa:.4,note:.35,hw:2})[c.kind]||1;
@@ -719,7 +722,7 @@ function feedWeight(c){
   if(c.hot) w*=1.5;                    // 词源八卦/翻车预警/老师强调的点 = 变比率里的"中奖"
   return w*(0.7+Math.random()*0.9);
 }
-/* 一张卡"有花样"= 带公式卡/投票/评论区/转发引用。全是素卡时整屏一个模子(第5轮审查 B)。 */
+/* 一张卡"有花样"= 带公式卡/投票/评论区/转发引用。全是素卡时整屏一个模子(第5轮审查 B)。*/
 function richKind(c){
   const x=c.post; if(!x)return '';
   if(x.figure)return 'fig';
@@ -732,8 +735,8 @@ function isRich(c){ return !!richKind(c); }
 function feedSrc(){
   return (typeof feedGroup!=='undefined'&&feedGroup!=='all')?FEED.filter(c=>c.kind===feedGroup):FEED;
 }
-/* 关注流:只看写好的 OC 账号,严格按时间倒序 —— 真产品的关注流不会乱序(第5轮审查 A)。
-   推荐流才是权重排序,那是"推荐"这个词本来的意思。 */
+/* 关注流：只看写好的 OC 账号，严格按时间倒序 —— 真产品的关注流不会乱序(第5轮审查 A)。
+   推荐流才是权重排序，那是"推荐"这个词本来的意思。*/
 function pickCards(n, exclude){
   hotSeen=0; hotIdx=0;
   const src=feedSrc().filter(c=>!exclude.has(c.key));
@@ -742,14 +745,14 @@ function pickCards(n, exclude){
               .sort((a,b)=>new Date(b.at||0)-new Date(a.at||0)).slice(0,n);
   }
   const pool=src.map(c=>({c,w:feedWeight(c)})).sort((a,b)=>b.w-a.w);
-  /* 两条硬约束,权重只在满足约束的候选里挑最高的:
-       1. 同一个人设不能连着占最近两张(第4轮:整屏都是「可测但不想营业」)
-       2. 素卡最多连两张,第三张必须有花样,而且换一种花样
-          (确认轮:滚到第三屏时 12 张全是知识库自动卡,零评论区零公式卡零转发)
-     约束满足不了才降级,而不是先塞满再补 —— 原来的两遍写法在池子后段必然退化成全素卡。 */
+  /* 两条硬约束，权重只在满足约束的候选里挑最高的：
+       1. 同一个人设不能连着占最近两张(第4轮：整屏都是「可测但不想营业」)
+       2. 素卡最多连两张，第三张必须有花样，而且换一种花样
+          (确认轮：滚到第三屏时 12 张全是知识库自动卡，零评论区零公式卡零转发)
+     约束满足不了才降级，而不是先塞满再补 —— 原来的两遍写法在池子后段必然退化成全素卡。*/
   const out=[]; const used=new Set();
   const au=c=>c.post?c.post.author:(c.per&&c.per.n)||'';
-  let plain=1, lastRich='';                 // 从 1 起步:第二张就该有花样,首屏是第一印象
+  let plain=1, lastRich='';                 // 从 1 起步：第二张就该有花样，首屏是第一印象
   const okAuthor=c=>!out.slice(-2).some(o=>au(o)===au(c));
   while(out.length<n){
     const cand=pool.filter(p=>!used.has(p.c.key));
@@ -775,15 +778,15 @@ function feedAgo(at){
   if(d<43200)return Math.floor(d/1440)+'天前';
   return new Intl.DateTimeFormat('zh-CN',{timeZone:TZ,month:'numeric',day:'numeric'}).format(new Date(at));
 }
-/* 转发/评论/赞的计数:由帖子 id 稳定生成。这是仿真的一部分(和人设的粉丝数同性质),
-   不是任何真实数据 —— 但没有它 feed 会显得"里面没有人"。 */
-/* 三个数要有真实的比例和量级差:赞 ≈ 10× 转发,评论 ≈ 2-3× 转发,冷门帖就该只有几个赞。
-   原来三个数挤在同一个窄区间、还都是三位数,一眼假(第5轮审查 E)。salt 1=转发 2=评论 3=赞。 */
+/* 转发/评论/赞的计数：由帖子 id 稳定生成。这是仿真的一部分(和人设的粉丝数同性质),
+   不是任何真实数据 —— 但没有它 feed 会显得"里面没有人"。*/
+/* 三个数要有真实的比例和量级差：赞 ≈ 10× 转发，评论 ≈ 2-3× 转发，冷门帖就该只有几个赞。
+   原来三个数挤在同一个窄区间、还都是三位数，一眼假(第5轮审查 E)。salt 1=转发 2=评论 3=赞。*/
 function fakeN(id,salt,boost){
   let h=0; for(let i=0;i<id.length;i++) h=(h*33+id.charCodeAt(i))|0;
   h=Math.abs(h);
   const base=[1,2,3,5,8,13,21,34][h%8]+(h>>3)%5;
-  // 精确 1:2:10 一眼假(第6轮审查),乘一个由 id 决定的 ±25% 抖动
+  // 精确 1:2:10 一眼假(第6轮审查)，乘一个由 id 决定的 ±25% 抖动
   const jit=(k)=>0.78+((h>>(k*5))%45)/100;
   const n=salt===1?base
         :salt===2?Math.round(base*(2+(h>>7)%2)*jit(2))
@@ -801,7 +804,7 @@ function fitFig(root){
     e.classList.toggle('scrolls', e.scrollWidth>e.clientWidth+1);
   });
   // 正文里的块级公式也会超宽。它外面是按行数裁的 .clip(overflow:hidden),
-  // 横向也一起裁掉 —— 屏幕上就是等号被从中间切成两半(第9轮审查)。所以只能缩,不能靠滚。
+  // 横向也一起裁掉 —— 屏幕上就是等号被从中间切成两半(第9轮审查)。所以只能缩，不能靠滚。
   R.querySelectorAll('.wbtext .katex-display, .wbcmt .katex-display').forEach(e=>{
     const box=e.parentElement && e.closest('.wbtext,.wbcmt'); if(!box)return;
     const inner=e.querySelector('.katex'); if(!inner)return;
@@ -817,7 +820,7 @@ function clipScan(root){
   });
 }
 function unclip(btn){ btn.previousElementSibling.classList.remove('clip'); btn.style.display='none'; }
-/* 热标签限流:6 张里最多挂一个。挂一半等于没挂(第7轮审查 P2-10)。 */
+/* 热标签限流：6 张里最多挂一个。挂一半等于没挂(第7轮审查 P2-10)。*/
 let hotSeen=0, hotIdx=0;
 function hotChip(hot){
   hotIdx++;
@@ -829,7 +832,7 @@ function hotChip(hot){
 function figTex(t){ t=(t||'').trim(); return /\$/.test(t)?t:('$$'+t+'$$'); }
 function wbAvatar(pk,size){
   const q=per(pk); const s=size||44;
-  // 有画好的头像就用图,没有(或加载失败)退回单字色块 —— 换头像不用改代码,传张图就行
+  // 有画好的头像就用图，没有(或加载失败)退回单字色块 —— 换头像不用改代码，传张图就行
   if(q.img) return `<img class="wbav" src="${AVBASE}${q.img}" alt=""
      style="width:${s}px;height:${s}px;object-fit:cover;background:${q.c}"
      onerror="this.outerHTML=wbAvatarText('${pk}',${s})">`;
@@ -861,8 +864,8 @@ function wbPoll(id,poll){
      ${opts}<div class="pmeta">${tot} 人参与 · 选完看解析</div>
      <div class="ex">${md(poll.explain_md||'')}</div></div>`;
 }
-/* 票数和转发/赞的计数同性质:由 id 稳定生成的仿真数字,不是真实数据。
-   没有它投票卡就只是四个空框,一眼看出不是投票(第7轮审查 P1-5)。 */
+/* 票数和转发/赞的计数同性质：由 id 稳定生成的仿真数字，不是真实数据。
+   没有它投票卡就只是四个空框，一眼看出不是投票(第7轮审查 P1-5)。*/
 function fakeVote(id,i){
   let h=i*7+3; for(let k=0;k<id.length;k++) h=(h*31+id.charCodeAt(k))|0;
   return 3+Math.abs(h)%140;
@@ -891,12 +894,12 @@ function ocMenu(key){
 }
 function ocard(c){
   const x=c.post, q=per(x.author), r=feKey(c.key);
-  // 最用力的那张卡(公式卡+评论区)互动数却是全场最低,看着假(第7轮审查 P2-9)
+  // 最用力的那张卡(公式卡+评论区)互动数却是全场最低，看着假(第7轮审查 P2-9)
   const boost=1+(x.figure?0.8:0)+((x.seed_comments||[]).length?0.5:0)+(x.poll?0.4:0);
   const rep = c.quoted ? `<div class="wbrep"><span class="who">@${esc(per(c.quoted.author).n)}</span>：
       ${md(c.quoted.body_md).replace(/^<p>|<\/p>$/g,'')}</div>` : '';
-  // 展开只留一个控件。原来行内「…展开」(管 full_md)和整行「展开全文」(管行数)并存,
-  // 同一个流里两种截断语义、两种省略号(第7轮审查 P1-2)。现在 full_md 直接接在正文后面,
+  // 展开只留一个控件。原来行内「…展开」(管 full_md)和整行「展开全文」(管行数)并存，
+  // 同一个流里两种截断语义、两种省略号(第7轮审查 P1-2)。现在 full_md 直接接在正文后面，
   // 一起交给按行数裁切的 .clip 管。
   const full = x.full_md ? md(x.full_md) : '';
   return `<div class="wbpost" data-k="${esc(c.key)}">
@@ -918,7 +921,7 @@ function ocard(c){
       <button class="${r.liked?'on':''}" onclick="feedAct(this,'${esc(c.key)}','post','like')"><svg viewBox='0 0 24 24'><path d='M7 21V10.5l4.2-7a1.9 1.9 0 0 1 3.4 1.7L13.3 9.5H19a2 2 0 0 1 2 2.35l-1.3 6.8A2.6 2.6 0 0 1 17.1 21Z'/><rect x='3' y='10.5' width='4' height='10.5' rx='1'/></svg><span class="wbcount">${fakeN(x.id,3,boost)||'赞'}</span></button>
     </div></div>`;
 }
-/* 换个讲法:立刻在下面插一条同主题、不同账号的帖 */
+/* 换个讲法：立刻在下面插一条同主题、不同账号的帖 */
 function rephrase(slug,topic,key){
   const pool=(D.fp||[]).filter(x=>((slug&&x.kp_slug===slug)||(topic&&x.topic===topic)) && ('post:'+x.id)!==key);
   if(!pool.length)return toast('这个点暂时只有这一条讲法');
@@ -931,7 +934,7 @@ function rephrase(slug,topic,key){
 }
 function fcard(c){ return ocard(c); }
 
-/* 热搜榜:最近被提到/更新得最多的主题,纯粹为了好玩,但排序是真的 */
+/* 热搜榜：最近被提到/更新得最多的主题，纯粹为了好玩，但排序是真的 */
 function wbHot(){
   const cnt={};
   D.kp.filter(k=>k.kind!=='term').forEach(k=>{
@@ -1004,13 +1007,13 @@ function goTab(v){
 }
 function dueSoon(){ return (D.hw||[]).some(h=>h.due_at && (new Date(h.due_at)-Date.now())/36e5 < 96 && new Date(h.due_at)>new Date()); }
 function wbCompose(){
-  openOv(`<h3>记一条</h3><textarea id="wbc" rows="4" placeholder="有什么新学到的?"></textarea>
+  openOv(`<h3>记一条</h3><textarea id="wbc" rows="4" placeholder="有什么新学到的？"></textarea>
     <button class="btn" onclick="wbSend()">发布</button>`);
 }
 async function wbSend(){
   const t=document.getElementById('wbc'), v=(t.value||'').trim(); if(!v)return;
   const {error}=await sb.from('study_log').insert({takeaway:v,category:'刷',source:'web',study_on:todayStr()});
-  if(error)return toast('没存上: '+error.message);
+  if(error)return toast('没存上：'+error.message);
   closeOv(); toast('发出去了'); loadAll();
 }
 async function feedNope(key,kind){
@@ -1024,19 +1027,19 @@ async function feedAct(btn,key,kind,action){
   if(btn) btn.classList.toggle('on');
   const r=feKey(key); if(action==='like')r.liked=!r.liked; if(action==='later')r.later=!r.later;
   await sb.from('feed_events').insert({card_key:key,kind:kind,action:action});
-  toast(action==='like'?'记下了:这条你会了':'加到稍后再看');
+  toast(action==='like'?'记下了：这条你会了':'加到稍后再看');
 }
 function feedAsk(key,label){
   openOv(`<h3>就这条提问</h3><div class="muted" style="margin-bottom:8px">${esc(label)}</div>
-    <textarea id="fq" rows="4" placeholder="写下你的疑问,下次窗口会看到"></textarea>
+    <textarea id="fq" rows="4" placeholder="写下你的疑问，下次窗口会看到"></textarea>
     <button class="btn" onclick="feedAskGo('${esc(key)}')">记下</button>`);
 }
 async function feedAskGo(key){
   const t=(document.getElementById('fq').value||'').trim(); if(!t)return;
   const {error}=await sb.from('qa_log').insert({question:t,window_name:'feed',topic:key});
-  closeOv(); toast(error?('没存上: '+error.message):'记下了'); if(!error)loadAll();
+  closeOv(); toast(error?('没存上：'+error.message):'记下了'); if(!error)loadAll();
 }
-/* 无限流:滚到底自动续 */
+/* 无限流：滚到底自动续 */
 let feedIO=null;
 function feedObserve(){
   const more=document.getElementById('feedmore'); if(!more)return;
@@ -1046,7 +1049,7 @@ function feedObserve(){
     const list=document.getElementById('feedlist'); if(!list)return;
     const shownKeys=new Set([...list.children].map(x=>x.dataset.k));
     const more2=pickCards(feedBatch, shownKeys);
-    if(!more2.length){ document.getElementById('feedmore').textContent='今天的池子见底了 —— 去别的页看看,或者明天再来'; feedIO.disconnect(); return; }
+    if(!more2.length){ document.getElementById('feedmore').textContent='今天的池子见底了 —— 去别的页看看，或者明天再来'; feedIO.disconnect(); return; }
     list.insertAdjacentHTML('beforeend',more2.map(fcard).join(''));
     mathify(list); fitFig(list); clipScan(list);
     markSeen(more2);
@@ -1059,15 +1062,15 @@ async function flushSeen(){
   const q=seenQueue.splice(0); if(!q.length||!sb)return;
   await sb.from('feed_events').insert(q);
 }
-// 截图审查用:?noevents=1 时不落库浏览记录。headless 一次跑会写几百条 seen,
-// 把「看过衰减」权重整体压平,等于替她把整个池子刷完(2026-09-02 清过一次 792 条)。
+// 截图审查用：?noevents=1 时不落库浏览记录。headless 一次跑会写几百条 seen,
+// 把「看过衰减」权重整体压平，等于替她把整个池子刷完(2026-09-02 清过一次 792 条)。
 const NOEV=/[?&]noevents=1/.test(location.search);
 function markSeen(cards){
   if(NOEV){ cards.forEach(c=>feKey(c.key||c).seen++); return; }
   cards.forEach(c=>{ const k=c.key||c; feKey(k).seen++; seenQueue.push({card_key:k,kind:c.kind||'card',action:'seen'}); });
   clearTimeout(seenTimer);
   seenTimer=setTimeout(flushSeen,800);
-  // 关标签/切后台时兜底,否则最后一批浏览记录会丢(实测滚 7 屏只落库了 2 屏)
+  // 关标签/切后台时兜底，否则最后一批浏览记录会丢(实测滚 7 屏只落库了 2 屏)
   if(!markSeen._bound){ markSeen._bound=true;
     addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden')flushSeen(); });
     addEventListener('pagehide',flushSeen); }
@@ -1107,14 +1110,14 @@ function srcBtns(o){
   if(o.slides_url)b.push(['课件',o.slides_url]);
   if(o.transcript_url)b.push(['转录',o.transcript_url]);
   if(o.notes_pdf_url)b.push(['笔记 PDF',o.notes_pdf_url]);
-  // 非 http = 私有 coursefiles 桶里的对象路径,点开时现签一个短期链接
+  // 非 http = 私有 coursefiles 桶里的对象路径，点开时现签一个短期链接
   return b.map(([t,u])=>u.startsWith('http')
     ? `<a class="srcbtn" target="_blank" href="${esc(u)}">${t} ↗</a>`
     : `<a class="srcbtn" href="javascript:void(0)" onclick="openPrivate('${esc(u)}')">${t} 🔒</a>`).join('');
 }
 async function openPrivate(path){
   const {data,error}=await sb.storage.from('coursefiles').createSignedUrl(path,3600);
-  if(error||!data)return toast('打不开: '+((error&&error.message)||'无权限'));
+  if(error||!data)return toast('打不开：'+((error&&error.message)||'无权限'));
   window.open(data.signedUrl,'_blank');
 }
 function kpChips(l){
@@ -1138,7 +1141,7 @@ function rToday(){
   h+=`<div class="card"><h2>课程 <span class="n">${d}</span></h2>`;
   h+=lec.length?lec.map(l=>`<div style="margin-bottom:10px">
       <b style="cursor:pointer" onclick="openLecture('${l.id}')">${esc(COURSES[l.course_code]||l.course_code)} →</b> <span class="muted">${esc(l.title||'')}</span>
-      <div class="md">${md(l.summary_md)||(l.prep_md?'<span class="muted">还没上课 —— 预习笔记已备好,点课程名展开</span>':'')}</div><div>${srcBtns(l)}</div>${kpChips(l)}</div>`).join('')
+      <div class="md">${md(l.summary_md)||(l.prep_md?'<span class="muted">还没上课 —— 预习笔记已备好，点课程名展开</span>':'')}</div><div>${srcBtns(l)}</div>${kpChips(l)}</div>`).join('')
     :`<div class="empty">这天没有课程记录</div>`;
   h+=`</div>`;
   h+=`<div class="card"><h2>学到 <span class="n">study log</span></h2>`;
@@ -1177,7 +1180,7 @@ function qaCard(q){
     <div style="font-size:12px;color:var(--accent)">你在这里问过 · ${dayOf(q.asked_at)}</div>
     <div style="font-size:13.5px;margin-top:2px">${esc(q.question)}</div></div>`;
 }
-// 把挂在本节课的问答按 anchor 插到对应小节末尾;没有 anchor 或匹配不上的收在最后
+// 把挂在本节课的问答按 anchor 插到对应小节末尾；没有 anchor 或匹配不上的收在最后
 function lectureBody(l){
   let html = md(l.summary_md) || '<p class="empty">暂无讲义</p>';
   const qs = D.qa.filter(q=>q.lecture_id===l.id);
@@ -1185,7 +1188,7 @@ function lectureBody(l){
   qs.forEach(q=>{
     if(!q.anchor){rest.push(q);return;}
     const key = q.anchor.replace(/\s/g,'');
-    // 找到标题文本包含 anchor 的那个 <hN>,插到下一个 <hN> 之前(即该节末尾)
+    // 找到标题文本包含 anchor 的那个 <hN>，插到下一个 <hN> 之前(即该节末尾)
     const re = /<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/g;
     let m, start=-1, end=html.length;
     while((m = re.exec(html))!==null){
@@ -1247,7 +1250,7 @@ function rKB(){
     <div class="card">${kbView==='map'?rMap(list):list.map(rowKP).join('')||'<div class="empty">空</div>'}</div>`;
 }
 function rMap(list){
-  // 主题思维导图:无主题筛选时画主题总览,选了主题画该主题的条目图;边 = 正文 [[slug]] 引用
+  // 主题思维导图：无主题筛选时画主题总览，选了主题画该主题的条目图；边 = 正文 [[slug]] 引用
   if(!kbTopic){
     const groups={};
     list.forEach(k=>{const t=k.topic||'未分类';(groups[t]=groups[t]||[]).push(k);});
@@ -1307,7 +1310,7 @@ function openKP(id){
     ${qas.length?`<div style="margin-top:12px"><b style="font-size:13.5px">你的问题与反思</b>`+
       qas.map(q=>`<div class="row" onclick="openQA('${q.id}')"><div class="t">${esc(q.question)}</div>
         <div class="m">${dayOf(q.asked_at)} · ${esc(q.window_name||'')}</div></div>`).join('')+`</div>`:''}
-    ${backs.length?`<div style="margin-top:10px" class="muted">被引用于:`+
+    ${backs.length?`<div style="margin-top:10px" class="muted">被引用于：`+
       backs.map(o=>`<a class="srcbtn" href="javascript:void(0)" onclick="closeOv();openKP('${o.id}')">${esc(o.title_zh||o.title_en)}</a>`).join('')+`</div>`:''}
     <div style="margin-top:14px;display:flex;align-items:center;gap:10px">
       <button class="btn" onclick="markReviewed('${k.id}')">✓ 我看过了</button>
@@ -1318,7 +1321,7 @@ async function markReviewed(id){
   const r1=await sb.from('kp_reviews').insert({kp_id:id});
   const r2=await sb.from('knowledge_points').update({last_reviewed_at:new Date().toISOString(),
     review_count:(k.review_count||0)+1}).eq('id',id);
-  if(r1.error||r2.error)return toast('失败: '+(r1.error||r2.error).message);
+  if(r1.error||r2.error)return toast('失败：'+(r1.error||r2.error).message);
   toast('已记录这次回顾');closeOv();loadAll();
 }
 
@@ -1337,7 +1340,7 @@ function rTerms(){
 
 async function openBook(path,page){
   const {data,error}=await sb.storage.from('learnfiles').createSignedUrl(path,3600);
-  if(error||!data)return toast('打不开: '+((error&&error.message)||'无权限'));
+  if(error||!data)return toast('打不开：'+((error&&error.message)||'无权限'));
   window.open(data.signedUrl+'#page='+page,'_blank');
 }
 
@@ -1366,7 +1369,7 @@ function openEN(id){
     <div class="md"><p><b>${esc(x.meaning_zh)}</b></p>
     ${x.context?`<blockquote>${esc(x.context)}</blockquote>`:''}
     ${md(x.note_md||'')}
-    ${x.source?`<p class="muted">出处:${esc(x.source)}
+    ${x.source?`<p class="muted">出处：${esc(x.source)}
       ${x.source_path?`<button class="chip" onclick="openBook('${x.source_path}',${x.source_page||1})">📖 翻到原文</button>`:''}</p>`:''}
     ${(x.tags||[]).length?`<p>${x.tags.map(t=>`<span class="chip">${esc(t)}</span>`).join(' ')}</p>`:''}</div>
     <div style="margin-top:14px"><button onclick="reviewEN('${x.id}')">✓ 我看过了${x.review_count?`（已 ${x.review_count} 次）`:''}</button></div>`);
@@ -1375,7 +1378,7 @@ async function reviewEN(id){
   const x=D.en.find(y=>y.id===id); if(!x)return;
   const {error}=await sb.from('english_log').update({
     last_reviewed_at:new Date().toISOString(), review_count:(x.review_count||0)+1}).eq('id',id);
-  if(error)return toast('记不上: '+error.message);
+  if(error)return toast('记不上：'+error.message);
   x.review_count=(x.review_count||0)+1; x.last_reviewed_at=new Date().toISOString();
   toast('记下了'); closeOv(); render();
 }
@@ -1413,7 +1416,7 @@ function openRead(id){
     <div class="muted">${esc(r.kind)} · 优先级 ${r.priority}</div>
     <div style="background:var(--well);border-radius:9px;padding:7px 10px;margin:8px 0;font-size:13px">
       <b>来源</b>:${esc(r.recommender||'(待补)')}
-      ${noRes?'<br><span style="color:var(--danger)">还没有电子资源 —— 你下载后把文件丢进 Drive 书目录或发我路径,我挂上链接</span>':''}</div>
+      ${noRes?'<br><span style="color:var(--danger)">还没有电子资源 —— 你下载后把文件丢进 Drive 书目录或发我路径，我挂上链接</span>':''}</div>
     <div style="margin:6px 0">${links}</div>
     ${r.note?`<div class="md">${md(r.note)}</div>`:''}
     <label>进度备注</label><input id="rq-prog" value="${esc(r.progress||'')}">
@@ -1425,7 +1428,7 @@ function openRead(id){
 async function setRead(id,st){
   const prog=document.getElementById('rq-prog')?.value||null;
   const {error}=await sb.from('reading_queue').update({status:st,progress:prog,updated_at:new Date().toISOString()}).eq('id',id);
-  if(error)return toast('失败: '+error.message);
+  if(error)return toast('失败：'+error.message);
   closeOv();toast('已更新');loadAll();
 }
 
@@ -1458,7 +1461,7 @@ function openQA(id){
       ${q.my_thought?`<div class="md" style="background:var(--well);border-radius:9px;padding:8px 12px;margin-top:6px">${md(q.my_thought)}</div>`:''}
       </details>`:''}
     <div class="md kp-body">${q.answer_md?md(q.answer_md):'<p class="empty">答案还没归档。</p>'}</div>
-    ${kps?`<div style="margin-top:10px"><span class="muted">相关知识点:</span> ${kps}</div>`:''}`);
+    ${kps?`<div style="margin-top:10px"><span class="muted">相关知识点：</span> ${kps}</div>`:''}`);
 }
 
 /* ---------- overlay / add ---------- */
@@ -1498,9 +1501,9 @@ async function saveAdd(){
       sources:v(3)?[{label:'她的疑问',url:'',locator:v(3)}]:[]});
     if(addType==='read')r=await sb.from('reading_queue').insert({title:v(1),link:v(2),recommender:v(3)||'自查'});
     if(addType==='qa')r=await sb.from('qa_log').insert({question:v(1),topic:v(2),window_name:'web'});
-  }catch(e){return toast('失败: '+e.message)}
-  if(r.error)return toast('失败: '+r.error.message);
-  closeOv();toast('已记下,我这边会跟进');loadAll();
+  }catch(e){return toast('失败：'+e.message)}
+  if(r.error)return toast('失败：'+r.error.message);
+  closeOv();toast('已记下，我这边会跟进');loadAll();
 }
 boot();
 </script>
