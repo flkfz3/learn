@@ -298,7 +298,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-02l';
+const BUILD='2026-09-02m';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -674,10 +674,15 @@ function feedWeight(c){
   return w*(0.7+Math.random()*0.9);
 }
 /* 一张卡"有花样"= 带公式卡/投票/评论区/转发引用。全是素卡时整屏一个模子(第5轮审查 B)。 */
-function isRich(c){
-  const x=c.post; if(!x)return false;
-  return !!(x.figure || x.poll || (x.seed_comments&&x.seed_comments.length) || c.quoted);
+function richKind(c){
+  const x=c.post; if(!x)return '';
+  if(x.figure)return 'fig';
+  if(x.poll)return 'poll';
+  if(c.quoted)return 'rep';
+  if(x.seed_comments&&x.seed_comments.length)return 'cmt';
+  return '';
 }
+function isRich(c){ return !!richKind(c); }
 function feedSrc(){
   return (typeof feedGroup!=='undefined'&&feedGroup!=='all')?FEED.filter(c=>c.kind===feedGroup):FEED;
 }
@@ -692,7 +697,7 @@ function pickCards(n, exclude){
   const pool=src.map(c=>({c,w:feedWeight(c)})).sort((a,b)=>b.w-a.w);
   // 纯按权重取会出现同一个人设连发五条(第4轮审查:整屏都是「可测但不想营业」)。
   // 取的时候跳过最近两条已用过的作者,实在没别人可用再放行。
-  const out=[]; const used=new Set(); const rest=[]; let plain=0;
+  const out=[]; const used=new Set(); const rest=[]; let plain=0, lastRich='';
   const au=c=>c.post?c.post.author:(c.per&&c.per.n)||'';
   for(let pass=0; pass<2 && out.length<n; pass++){
     for(const p of (pass?rest:pool)){
@@ -700,9 +705,13 @@ function pickCards(n, exclude){
       if(used.has(p.c.key))continue;
       if(!pass){
         if(out.slice(-2).some(o=>au(o)===au(p.c))){ rest.push(p); continue; }
-        if(plain>=2 && !isRich(p.c)){ rest.push(p); continue; }   // 连两张素卡后优先给有花样的
+        const rk=richKind(p.c);
+        if(plain>=2 && !rk){ rest.push(p); continue; }        // 连两张素卡后优先给有花样的
+        // 花样也要轮着来:公式卡权重高,不轮换的话前 12 张全是公式卡,转发/投票一次都露不出来
+        if(rk && rk===lastRich){ rest.push(p); continue; }
       }
-      used.add(p.c.key); out.push(p.c); plain=isRich(p.c)?0:plain+1;
+      const k2=richKind(p.c);
+      used.add(p.c.key); out.push(p.c); plain=k2?0:plain+1; if(k2)lastRich=k2;
     }
   }
   return out;
