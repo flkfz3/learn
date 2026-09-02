@@ -342,7 +342,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-03i';
+const BUILD='2026-09-03j';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -737,7 +737,7 @@ function feedWeight(c){
   // 于是知识库自动卡拿到了和写好的帖一样的 3.2 —— 实测抽 96 张有 51 张是自动卡,
   // 统计推断/线性模型/统计计算的帖子几乎选不上(整体审查抓到"四屏里全是概率论和英语")。
   // 用 c.auto 把它们降回来。
-  let w = c.pin?40 : (c.auto ? ({term:.5,kp:.5,lec:.6,en:.5,read:.5,qa:.4,note:.35}[c.post&&c.post.topic]??.5)
+  let w = c.pin?40 : (c.auto ? ({term:1.0,kp:1.2,lec:1.3,en:1.1,read:1.0,qa:1.0,note:.8}[c.post&&c.post.topic]??1.0)
                              : ({post:3.2,hw:2})[c.kind]||3.2);
   w *= (c.level===1?1.35:c.level===2?1:.7);
   w /= (1+1.6*r.seen);
@@ -791,7 +791,8 @@ function pickCards(n, exclude){
   const richSeen={};                        // 每种花样上次出现在第几位，越久没露面越优先
   const okAuthor=c=>!out.slice(-3).some(o=>au(o)===au(c));            // 作者：近三条不重复
   const okTopic =c=>!out.slice(-6).some(o=>topicOf(o)===topicOf(c));  // 概念：近六条不重复
-  const okArea  =c=>!(out.length>=3 && out.slice(-3).every(o=>areaOf(o)===areaOf(c)));
+  const okArea  =c=>!(out.length>=3 && out.slice(-3).every(o=>areaOf(o)===areaOf(c)))
+                    && out.filter(o=>areaOf(o)===areaOf(c)).length < Math.max(3,Math.ceil(n*0.42));
   const freshest=arr=>arr.slice().sort((a,b)=>((richSeen[richKind(a.c)]??-99)-(richSeen[richKind(b.c)]??-99)))[0];
   while(out.length<n){
     const cand=pool.filter(p=>!used.has(p.c.key));
