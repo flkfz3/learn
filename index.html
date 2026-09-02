@@ -302,7 +302,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-02o';
+const BUILD='2026-09-02p';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -693,6 +693,7 @@ function feedSrc(){
 /* 关注流:只看写好的 OC 账号,严格按时间倒序 —— 真产品的关注流不会乱序(第5轮审查 A)。
    推荐流才是权重排序,那是"推荐"这个词本来的意思。 */
 function pickCards(n, exclude){
+  hotSeen=0; hotIdx=0;
   const src=feedSrc().filter(c=>!exclude.has(c.key));
   if(feedSort==='fol'){
     return src.filter(c=>c.kind==='post'&&c.post&&!c.post.auto)
@@ -754,6 +755,15 @@ function clipScan(root){
   });
 }
 function unclip(btn){ btn.previousElementSibling.classList.remove('clip'); btn.style.display='none'; }
+/* 热标签限流:6 张里最多挂一个。挂一半等于没挂(第7轮审查 P2-10)。 */
+let hotSeen=0, hotIdx=0;
+function hotChip(hot){
+  hotIdx++;
+  if(!hot) return '';
+  if(hotIdx-hotSeen < 6) return '';
+  hotSeen=hotIdx;
+  return '<span class="wbchip">热</span>';
+}
 function figTex(t){ t=(t||'').trim(); return /\$/.test(t)?t:('$$'+t+'$$'); }
 function wbAvatar(pk,size){
   const q=per(pk); const s=size||44;
@@ -832,7 +842,7 @@ function ocard(c){
     <div class="wbtop">${wbAvatar(x.author)}
       <div style="flex:1;min-width:0">
         <div class="wbname">${esc(q.n)}${q.v?'<span class="wbbadge">V</span>':''}</div>
-        <div class="wbfrom">${feedAgo(x.posted_at)} · 来自 <b>${esc(q.dev)}</b>${(x.hot && (Date.now()-new Date(x.posted_at||0))<8.6e7)?'<span class="wbchip">热</span>':''}</div>
+        <div class="wbfrom">${feedAgo(x.posted_at)} · 来自 <b>${esc(q.dev)}</b>${hotChip(x.hot)}</div>
       </div></div>
     <div class="wbtext clip">${md(x.body_md)}${full}</div>
     <div class="wbmore2" onclick="unclip(this)">展开全文</div>
