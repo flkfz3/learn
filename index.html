@@ -86,6 +86,11 @@ html[data-theme=dark] .wbav{background:linear-gradient(135deg,#4a3f7a,#6b5aa8);c
      text-wrap:pretty 专治末行只剩两个字的孤行(第8轮审查 P1)。 */
 .wbcmt,.wbrep{text-wrap:pretty}
 .nb{white-space:nowrap}   /* 带连字符/拉丁字母的术语不许劈开:σ-域 断成「σ-」+「域。」最难看 */
+/* feed 里的表格原来一条样式都没有(.md table 只管知识库页),裸 table 在按行数裁的
+   -webkit-box 容器里表头和数据列会错开,看着像排版事故(确认轮抓到) */
+.wbtext table{display:block;width:100%;border-collapse:collapse;overflow-x:auto;margin:6px 0;font-size:13px}
+.wbtext th,.wbtext td{border:1px solid var(--wb-line);padding:3px 8px;text-align:left;white-space:nowrap}
+.wbtext th{background:var(--wb-bg);font-weight:600}
 /* 等宽字体里没有中文字形,中文会掉到别的 face 上,字重字距和正文对不上(第8轮审查 P4) */
 code,pre,kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"PingFang SC","Microsoft YaHei",monospace}
 /* 收起状态按行数裁,不按字符数 —— 否则两行的卡被收起、八行的卡反而全展开(第6轮审查 4) */
@@ -316,7 +321,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-02t';
+const BUILD='2026-09-02u';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
