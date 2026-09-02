@@ -272,7 +272,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-02c';
+const BUILD='2026-09-02d';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -596,10 +596,14 @@ function buildFeed(){
     from:t.category||'笔记', head:'', text:oneSentence(t.takeaway,120),
     full:t.takeaway, link:t.link}));
 
+  /* 作业倒计时也走 OC 渲染,否则同屏会出现两套按钮文案(视觉审查抓到的) */
   (D.hw||[]).filter(h=>h.due_at && new Date(h.due_at)>new Date()).forEach(h=>push({
-    key:'hw:'+h.id, kind:'hw', level:1, per:PERSONA.ddl, at:h.created_at,
-    from:(COURSES[h.course_code]||h.course_code),
-    head:h.title+' · '+(h.exercises||''), text:'', due:h.due_at, pin:true}));
+    key:'hw:'+h.id, kind:'post', level:1, per:per('proof'), at:h.created_at, pin:true,
+    post:{id:'hw-'+h.id, author:'proof', posted_at:h.created_at, hot:false,
+          body_md:'**'+(COURSES[h.course_code]||h.course_code)+' '+(h.title||'')+'**　'+(h.exercises||''),
+          full_md:h.solution_note||null, seed_comments:[], poll:null,
+          topic:'homework', kp_slug:null},
+    due:h.due_at}));
 
   // 写好的 OC 帖走 c.post,没有 c.text —— 少了第一个条件会被这行整批丢掉(实测 43 条全没了)
   FEED=C.filter(c=>c.kind==='post'||(c.text&&c.text.length>1)||c.quiz||c.due);
@@ -684,6 +688,7 @@ function ocard(c){
         <div class="wbfrom">${feedAgo(x.posted_at)} · 来自 <b>${esc(q.dev)}</b>${x.hot?'<span class="wbchip">热</span>':''}</div>
       </div></div>
     <div class="wbtext">${md(x.body_md)}</div>
+    ${c.due?`<div class="wbfrom" style="margin-top:2px">${dueLabel(c.due)}</div>`:''}
     ${full}${rep}${wbPoll(x.id,x.poll)}
     ${wbComments(x.seed_comments)}
     <div class="wbicons">
