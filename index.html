@@ -102,7 +102,7 @@ html[data-theme=dark] .wbav{background:linear-gradient(135deg,#4a3f7a,#6b5aa8);c
 /* 等宽字体里没有中文字形,中文会掉到别的 face 上,字重字距和正文对不上(第8轮审查 P4) */
 code,pre,kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"PingFang SC","Microsoft YaHei",monospace}
 /* 收起状态按行数裁,不按字符数 —— 否则两行的卡被收起、八行的卡反而全展开(第6轮审查 4) */
-.wbtext.clip{display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.wbtext.clip{display:-webkit-box;-webkit-line-clamp:8;-webkit-box-orient:vertical;overflow:hidden}
 .wbtext.clip p:last-child{margin-bottom:0}
 .wbmore2{color:#1a73e8;cursor:pointer;font-size:13.5px;margin:7px 0 5px;display:none}
 .wbmore2.show{display:block}
@@ -334,7 +334,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-03c';
+const BUILD='2026-09-03d';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -825,7 +825,12 @@ function fitFig(root){
 function clipScan(root){
   (root||document).querySelectorAll('.wbtext.clip').forEach(e=>{
     const btn=e.nextElementSibling;
-    if(btn&&btn.classList.contains('wbmore2')&&e.scrollHeight>e.clientHeight+2) btn.classList.add('show');
+    if(!btn||!btn.classList.contains('wbmore2'))return;
+    const over=e.scrollHeight-e.clientHeight;
+    // 只藏了一行还挂个「展开全文」很傻,而且经常正好把最后那句"我放评论里了"切掉。
+    // 溢出不到 40px 就干脆全放出来。
+    if(over<=40){ e.classList.remove('clip'); return; }
+    btn.classList.add('show');
   });
 }
 function unclip(btn){
