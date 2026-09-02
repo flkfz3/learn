@@ -348,7 +348,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-03r';
+const BUILD='2026-09-03s';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -768,6 +768,11 @@ const AREA={};
 'english study history'.split(' ').forEach(t=>AREA[t]='misc');
 function areaOf(c){ return c.auto ? 'kb' : (AREA[(c.post&&c.post.topic)||c.kind] || 'misc'); }
 function topicOf(c){ return (c.post&&c.post.topic)||c.slug||c.kind; }
+// 正文长到会被裁的卡(渲染后才挂「展开全文」)不许相邻 —— 字数是渲染前唯一能用的代理。
+function isLong(c){
+  const x=c.post; if(!x)return false;
+  return ((x.body_md||'').length + (x.full_md||'').length) > 190;
+}
 function richKind(c){
   const x=c.post; if(!x)return '';
   if(x.figure)return 'fig';
@@ -808,6 +813,7 @@ function pickCards(n, exclude){
   const richSeen={};                        // 每种花样上次出现在第几位，越久没露面越优先
   const okAuthor=c=>!out.slice(-3).some(o=>au(o)===au(c));            // 作者：近三条不重复
   const okTopic =c=>!out.slice(-6).some(o=>topicOf(o)===topicOf(c));  // 概念：近六条不重复
+  const okLong  =c=>!(out.length && isLong(out[out.length-1]) && isLong(c));
   const okArea  =c=>areaOf(c)==='kb' ||     // 知识库卡有自己的配额，不占学科名额
                     (!(out.length>=1 && areaOf(out[out.length-1])===areaOf(c))
                      && out.filter(o=>areaOf(o)===areaOf(c)).length < Math.max(3,Math.ceil(n*0.34)));
@@ -815,7 +821,7 @@ function pickCards(n, exclude){
   while(out.length<n){
     const cand=pool.filter(p=>!used.has(p.c.key));
     if(!cand.length)break;
-    const full=cand.filter(p=>okAuthor(p.c)&&okTopic(p.c)&&okArea(p.c));
+    const full=cand.filter(p=>okAuthor(p.c)&&okTopic(p.c)&&okArea(p.c)&&okLong(p.c));
     const rich=full.filter(p=>richKind(p.c));
     // 每 12 张至少 2 张来自知识库(她自己的笔记);位置排到后段还没够就强制补
     // 自动卡都是素卡,配额硬插会造出三张素卡连排(实测最长素卡连续 2→3)。
