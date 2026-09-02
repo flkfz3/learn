@@ -46,7 +46,7 @@ header .sp{flex:1}
 
 /* ---------- 刷:照着微博做 ---------- */
 :root{ --wb-org:#ff8200; --wb-name:#eb7350; --wb-meta:#939393; --wb-bg:#f2f2f5;
-       --wb-card:#fff; --wb-line:#f0f0f0; --wb-txt:#333; --wb-blue:#3c8ee6; }
+       --wb-card:#fff; --wb-line:#f0f0f0; --wb-txt:#333; --wb-blue:#1a73e8; }
 html[data-theme=dark]{ --wb-org:#ff9a33; --wb-name:#ff9f7a; --wb-meta:#8f8caa;
        --wb-bg:#15132e; --wb-card:#1d1b38; --wb-line:#2c2a52; --wb-txt:#e8e6f7; --wb-blue:#6fb0ef; }
 
@@ -64,8 +64,9 @@ html[data-theme=dark]{ --wb-org:#ff9a33; --wb-name:#ff9f7a; --wb-meta:#8f8caa;
 .wbnav a:hover{background:var(--wb-bg)}
 .wbnav a.on{color:var(--wb-org);font-weight:600}
 .wbnav a .c{float:right;color:var(--wb-meta);font-size:12px;font-weight:400}
-.wbpost{background:var(--wb-card);border:1px solid var(--wb-line);border-radius:6px;
-    padding:11px 13px 0;margin-bottom:8px}
+/* 微博手机端是通栏白卡:无圆角、无左右边距,只靠灰带分隔(视觉审查 P0-3) */
+.wbpost{background:var(--wb-card);border:0;border-top:1px solid var(--wb-line);border-radius:0;
+    padding:11px 14px 0;margin:0 -12px 8px}
 .wbtop{display:flex;gap:10px}
 /* 纯平色圆像企业微信默认头像,加一层渐变才有点真实感 */
 .wbav{width:44px;height:44px;border-radius:50%;flex:none;display:flex;align-items:center;
@@ -78,11 +79,15 @@ html[data-theme=dark] .wbav{background:linear-gradient(135deg,#4a3f7a,#6b5aa8);c
 .wbfrom b{color:var(--wb-blue);font-weight:400}
 .wbtext{margin:7px 0 5px;font-size:15px;line-height:1.6;word-break:break-word}
 .wbtext .katex{font-size:0.95em}
-.wbmoretxt{color:var(--wb-blue);cursor:pointer}
+.wbmoretxt{color:#1a73e8;cursor:pointer;font-size:14px}
 .wbfull{display:none;margin-top:6px;background:var(--wb-bg);border-radius:4px;padding:8px 10px;font-size:14px}
 .wbtext p{margin:.3em 0}
 .wbtext .tt{font-weight:600}
 .wbtopic{color:var(--wb-blue)}
+.wbfig{margin:8px -14px 4px;padding:26px 16px;text-align:center;font-size:17px;
+  background:linear-gradient(135deg,#2b2540,#463a6b);color:#f2eeff;line-height:1.9}
+.wbfig .cap{display:block;margin-top:10px;font-size:12px;color:#b9b0e0}
+.wbfig .katex{color:#f2eeff}
 .wbquote{background:var(--wb-bg);border-radius:4px;padding:8px 10px;margin:6px 0;font-size:13.5px;
     color:var(--wb-txt)}
 .wbacts{display:flex;border-top:1px solid var(--wb-line);margin-top:8px}
@@ -118,15 +123,17 @@ html[data-theme=dark] .wbchip{background:#3a2c1c;color:#ffb066}
   display:flex;align-items:center;gap:12px;padding:8px 12px;margin:0 -12px 10px}
 .wbbar .me{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#ffd9b0,#ffb066);
   display:flex;align-items:center;justify-content:center;font-size:13px;color:#7a4a12;font-weight:700}
-.wbbar .tabs{flex:1;display:flex;gap:18px;justify-content:center}
+.wbbar .tabs{flex:1;display:flex;gap:16px;overflow-x:auto;scrollbar-width:none}
+.wbbar .tabs::-webkit-scrollbar{display:none}
 .wbbar .tabs span{font-size:16px;color:var(--wb-meta);cursor:pointer;padding-bottom:3px}
-.wbbar .tabs span.on{color:var(--wb-txt);font-weight:700;border-bottom:3px solid #ff5a5f}
+.wbbar .tabs span.on{color:var(--wb-txt);font-weight:700;position:relative}
+.wbbar .tabs span.on::after{content:'';position:absolute;left:50%;transform:translateX(-50%);bottom:-4px;width:18px;height:2.5px;border-radius:2px;background:#ff5a5f}
 .wbbar .ic{font-size:17px;color:var(--wb-txt);cursor:pointer;background:none;border:0}
 .wbtabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--wb-card);
   border-top:1px solid var(--wb-line);display:flex;padding:6px 0 8px}
 .wbtabbar button{flex:1;border:0;background:none;color:var(--wb-meta);font-size:11px;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;gap:2px}
-.wbtabbar button b{font-size:19px;font-weight:400;line-height:1}
+.wbtabbar button b{display:flex;align-items:center;justify-content:center;height:21px}
 .wbtabbar .plus{background:var(--wb-org);color:#fff;width:34px;height:34px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;font-size:22px;line-height:1}
 .wbtabbar button.on{color:var(--wb-org)}
@@ -160,7 +167,9 @@ html[data-theme=dark] .wbchip{background:#3a2c1c;color:#ffb066}
 .wbpoll .opt.right{border-color:#2e7d32;color:#2e7d32;font-weight:600}
 .wbpoll .opt.wrong{border-color:#c62828;color:#c62828}
 .wbpoll .ex{font-size:13px;color:var(--wb-meta);margin-top:6px;display:none}
-.wbcount{font-size:12px;color:var(--wb-meta);margin-left:3px}
+.wbcount{font-size:12px;color:#6b6b6b;margin-left:3px}
+.wbline{font-size:12px;color:#6b6b6b;padding:5px 2px 7px;display:flex;gap:12px;align-items:center}
+.wbline .r{margin-left:auto;color:var(--wb-org);cursor:pointer}
 
 
 nav{display:flex;gap:4px;border-bottom:1.5px solid var(--line);margin:4px 0 16px;overflow-x:auto;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent)}
@@ -272,7 +281,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-02d';
+const BUILD='2026-09-02e';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -673,29 +682,35 @@ function votePoll(id,i,ans){
   if(sb) sb.from('feed_events').insert({card_key:'poll:'+id,kind:'poll',action:i===ans?'like':'later'});
 }
 /* 写好的 OC 帖子 */
+function ocMenu(key){
+  openOv(`<h3>这条帖子</h3>
+   <button class="btn" onclick="feedAct(null,'${key}','post','later');closeOv();toast('加进收藏夹')">收藏</button>
+   <button class="btn" style="margin-left:8px;background:var(--well);color:var(--ink)"
+     onclick="feedNope('${key}','post');closeOv()">不想看这条</button>`);
+}
 function ocard(c){
   const x=c.post, q=per(x.author), r=feKey(c.key);
   const rep = c.quoted ? `<div class="wbrep"><span class="who">@${esc(per(c.quoted.author).n)}</span>：
       ${md(c.quoted.body_md).replace(/^<p>|<\/p>$/g,'')}</div>` : '';
   // 全文:微博是正文末尾一个内联小链接,不是整行灰底折叠面板
-  const full = x.full_md ? `<span class="wbmoretxt" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">展开全文</span>
+  const full = x.full_md ? `<span class="wbmoretxt" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">…展开</span>
       <div class="wbfull">${md(x.full_md)}</div>` : '';
   return `<div class="wbpost" data-k="${esc(c.key)}">
-    <span class="wbmore" onclick="feedNope('${esc(c.key)}','post')" title="不想看这条">⌄</span>
+    <span class="wbmore" onclick="ocMenu('${esc(c.key)}')" title="更多">⌄</span>
     <div class="wbtop">${wbAvatar(x.author)}
       <div style="flex:1;min-width:0">
         <div class="wbname">${esc(q.n)}${q.v?'<span class="wbbadge">V</span>':''}</div>
         <div class="wbfrom">${feedAgo(x.posted_at)} · 来自 <b>${esc(q.dev)}</b>${x.hot?'<span class="wbchip">热</span>':''}</div>
       </div></div>
-    <div class="wbtext">${md(x.body_md)}</div>
+    <div class="wbtext">${md(x.body_md)}${full}</div>
+    ${x.figure?`<div class="wbfig">${md(x.figure.tex||'')}<span class="cap">${esc(x.figure.cap||'')}</span></div>`:''}
     ${c.due?`<div class="wbfrom" style="margin-top:2px">${dueLabel(c.due)}</div>`:''}
-    ${full}${rep}${wbPoll(x.id,x.poll)}
+    ${rep}${wbPoll(x.id,x.poll)}
     ${wbComments(x.seed_comments)}
     <div class="wbicons">
-      <button onclick="rephrase('${esc(x.kp_slug||'')}','${esc(x.topic||'')}','${esc(c.key)}')">🔁 <span class="wbcount">${fakeN(x.id,1)}</span></button>
-      <button onclick="feedAsk('${esc(c.key)}','${esc((x.body_md||'').slice(0,40).replace(/['\n]/g,' '))}')">💬 <span class="wbcount">${fakeN(x.id,2)}</span></button>
-      <button class="${r.liked?'on':''}" onclick="feedAct(this,'${esc(c.key)}','post','like')">👍 <span class="wbcount">${fakeN(x.id,3)+(r.liked?1:0)}</span></button>
-      <button class="${r.later?'on':''}" onclick="feedAct(this,'${esc(c.key)}','post','later')">🔖 <span class="wbcount">${r.later?'已收藏':''}</span></button>
+      <button onclick="rephrase('${esc(x.kp_slug||'')}','${esc(x.topic||'')}','${esc(c.key)}')">🔁 <span class="wbcount">${fakeN(x.id,1)||'转发'}</span></button>
+      <button onclick="feedAsk('${esc(c.key)}','${esc((x.body_md||'').slice(0,40).replace(/['\n]/g,' '))}')">💬 <span class="wbcount">${fakeN(x.id,2)||'评论'}</span></button>
+      <button class="${r.liked?'on':''}" onclick="feedAct(this,'${esc(c.key)}','post','like')">👍 <span class="wbcount">${fakeN(x.id,3)||'赞'}${r.liked?' ✓':''}</span></button>
     </div></div>`;
 }
 /* 换个讲法:立刻在下面插一条同主题、不同账号的帖 */
@@ -790,11 +805,9 @@ function rFeed(){
     <div class="wbgrid">
       <div class="wbside"><div class="wbbox wbnav"><h4>首页</h4>${nav}</div></div>
       <div>
-        <div class="wbstat" style="margin-bottom:8px">
-          <span>今天刷了 <b>${seenToday}</b> 条</span><span>连着 <b>${streak}</b> 天</span>
-          <span>标会了 <b>${liked}</b></span><span style="flex:1"></span>
-          <button class="iconbtn" style="padding:2px 9px;font-size:12px" onclick="reshuffle()">换一换</button>
-        </div>
+        <div class="wbline"><span>今天 <b>${seenToday}</b> 条</span>
+          <span>连着 <b>${streak}</b> 天</span>
+          <span class="r" onclick="reshuffle()">换一批</span></div>
         <div id="feedlist">${first.map(fcard).join('')}</div>
         <div class="wbend" id="feedmore">正在加载…</div>
       </div>
@@ -809,11 +822,11 @@ function rFeed(){
       </div>
     </div>
     <div class="wbtabbar">
-      <button class="on"><b>⌂</b>首页</button>
-      <button onclick="goTab('kb')"><b>◍</b>发现</button>
+      <button class="on"><b><svg viewBox='0 0 24 24' width='21' height='21' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M3 11l9-7 9 7'/><path d='M5 10v10h14V10'/></svg></b>首页</button>
+      <button onclick="goTab('kb')"><b><svg viewBox='0 0 24 24' width='21' height='21' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M15 9l-2.2 5.8L7 17l2.2-5.8z'/></svg></b>发现</button>
       <button onclick="wbCompose()"><span class="plus">＋</span></button>
-      <button onclick="goTab('hw')"><b>✉</b>消息${dueSoon()?'<span style="color:#e8543f">•</span>':''}</button>
-      <button onclick="goTab('today')"><b>☺</b>我</button>
+      <button onclick="goTab('hw')"><b><svg viewBox='0 0 24 24' width='21' height='21' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='5' width='18' height='14' rx='2'/><path d='M3.5 6.5L12 13l8.5-6.5'/></svg></b>消息${dueSoon()?'<span style="color:#e8543f">•</span>':''}</button>
+      <button onclick="goTab('today')"><b><svg viewBox='0 0 24 24' width='21' height='21' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='8' r='3.6'/><path d='M4.5 20c1.4-3.6 4.2-5.4 7.5-5.4s6.1 1.8 7.5 5.4'/></svg></b>我</button>
     </div></div>`;
 }
 function goTab(v){
@@ -839,7 +852,7 @@ async function feedNope(key,kind){
 }
 function reshuffle(){ render(); window.scrollTo({top:0,behavior:'smooth'}); }
 async function feedAct(btn,key,kind,action){
-  btn.classList.toggle('did');
+  if(btn) btn.classList.toggle('on');
   const r=feKey(key); if(action==='like')r.liked=!r.liked; if(action==='later')r.later=!r.later;
   await sb.from('feed_events').insert({card_key:key,kind:kind,action:action});
   toast(action==='like'?'记下了:这条你会了':'加到稍后再看');
