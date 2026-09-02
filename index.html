@@ -171,12 +171,14 @@ html[data-theme=dark] .wbchip{background:#3a2c1c;color:#ffb066}
 /* 刷页藏了 header 和 #tabs,底部 tab bar 又只在窄屏显示 —— 桌面上会没有任何出口。
    这个按钮在所有宽度都在。 */
 .wbbar .ic.back{font-size:13px;color:var(--wb-blue);border:1px solid var(--wb-line);
-  border-radius:14px;padding:3px 10px;white-space:nowrap}
+  border-radius:14px;padding:3px 10px;white-space:nowrap;text-decoration:none;line-height:1.9}
+#tabs .gofeed{font-size:14px;color:#fff;background:var(--accent);border-radius:14px;
+  padding:4px 12px;text-decoration:none;white-space:nowrap;align-self:center}
 .wbtabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--wb-card);
   border-top:1px solid var(--wb-line);box-shadow:0 -6px 12px -8px rgba(0,0,0,.28);display:flex;padding:6px 0 8px}
-.wbtabbar button{flex:1;border:0;background:none;color:var(--wb-meta);font-size:11px;cursor:pointer;
-  display:flex;flex-direction:column;align-items:center;gap:2px}
-.wbtabbar button b{display:flex;align-items:center;justify-content:center;height:21px}
+.wbtabbar button,.wbtabbar .tabbtn{flex:1;border:0;background:none;color:var(--wb-meta);font-size:11px;
+  cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none}
+.wbtabbar button b,.wbtabbar .tabbtn b{display:flex;align-items:center;justify-content:center;height:21px}
 .wbtabbar .plus{background:var(--wb-org);color:#fff;width:34px;height:34px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;font-size:22px;line-height:1}
 .wbtabbar button.on{color:var(--wb-org)}
@@ -330,7 +332,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
     <button class="iconbtn" onclick="logout()">退出</button>
   </header>
   <nav id="tabs">
-    <button data-v="feed" class="on">刷</button>
+    <a class="gofeed" href="/shua" title="去刷">刷</a>
     <button data-v="today">今日</button>
     <button data-v="courses">课程</button>
     <button data-v="kb">知识库</button>
@@ -352,14 +354,17 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-03t';
+const BUILD='2026-09-03v';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
 let COURSES={};  // 课程名从数据库取(私有),不写进公开页面
 const KINDZH={term:'术语',concept:'概念',theorem:'定理',trap:'易错',method:'方法'};
 const STZH={stub:'待写',draft:'草稿',done:'成稿'};
-let sb=null, D={kp:[],lec:[],qa:[],rq:[],sl:[]}, cur='feed', selDate=todayStr();
+const IS_SHUA=/^\/shua\/?$/.test(location.pathname);
+const WANT=(location.search.match(/[?&]v=([a-z]+)/)||[])[1];
+let sb=null, D={kp:[],lec:[],qa:[],rq:[],sl:[]},
+    cur=IS_SHUA?'feed':(WANT||'today'), selDate=todayStr();
 
 document.getElementById('build').textContent='build '+BUILD;
 if(localStorage.getItem('learn-theme')==='dark'||
@@ -461,9 +466,12 @@ document.getElementById('tabs').addEventListener('click',e=>{
   document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
   cur=b.dataset.v;render();
 });
+/* 她要的是两个入口互相通,不是一个页面切标签:
+     /       → 学习台(原版)
+     /shua   → 刷
+   两边各有一个去对面的链接,都能收藏。/shua 由 _redirects 重写到同一个 index.html。 */
 function render(){
   const v=document.getElementById('view');
-  // 两边互通:刷页有「学习台」按钮,学习台的标签栏第一个就是「刷」
   document.title = (cur==='feed') ? '刷 · learn' : 'learn · 学习台';
   // FAB 是 fixed 的,在信息流上会盖住正文(视觉审查实测每屏挡掉 3-4 个字);
   // 刷页本来每张卡就有「提问」按钮,直接藏掉。
@@ -1100,7 +1108,7 @@ function rFeed(){
         <span class="${feedSort==='rec'?'on':''}" onclick="setSort('rec')">推荐</span></div>
       <button class="ic" onclick="reshuffle()" title="换一批"><svg viewBox="0 0 24 24" width="19" height="19"
         fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></button>
-      <button class="ic back" onclick="goTab('today')" title="回学习台">学习台</button>
+      <a class="ic back" href="/" title="回学习台">学习台</a>
     </div>
     <div class="wbgrid">
       <div class="wbside"><div class="wbbox wbnav"><h4>首页</h4>${nav}</div></div>
@@ -1122,11 +1130,11 @@ function rFeed(){
       </div>
     </div>
     <div class="wbtabbar">
-      <button class="on"><b><svg viewBox='0 0 24 24' width='21' height='21' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M3 11l9-7 9 7'/><path d='M5 10v10h14V10'/></svg></b>首页</button>
-      <button onclick="goTab('kb')"><b><svg viewBox='0 0 24 24' width='21' height='21' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M15 9l-2.2 5.8L7 17l2.2-5.8z'/></svg></b>发现</button>
+      <button class="on" onclick="window.scrollTo({top:0,behavior:'smooth'})"><b><svg viewBox='0 0 24 24' width='21' height='21' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M3 11l9-7 9 7'/><path d='M5 10v10h14V10'/></svg></b>首页</button>
+      <a class="tabbtn" href="/?v=kb"><b><svg viewBox='0 0 24 24' width='21' height='21' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M15 9l-2.2 5.8L7 17l2.2-5.8z'/></svg></b>发现</a>
       <button onclick="wbCompose()"><span class="plus">＋</span></button>
-      <button onclick="goTab('hw')"><b><svg viewBox='0 0 24 24' width='21' height='21' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='5' width='18' height='14' rx='2'/><path d='M3.5 6.5L12 13l8.5-6.5'/></svg></b>消息${dueSoon()?'<span style="color:#e8543f">•</span>':''}</button>
-      <button onclick="goTab('today')"><b><svg viewBox='0 0 24 24' width='21' height='21' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='7.6' r='4'/><path d='M3.8 20.2c1.6-4 4.6-6 8.2-6s6.6 2 8.2 6'/></svg></b>我</button>
+      <a class="tabbtn" href="/?v=hw"><b><svg viewBox='0 0 24 24' width='21' height='21' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='5' width='18' height='14' rx='2'/><path d='M3.5 6.5L12 13l8.5-6.5'/></svg></b>消息${dueSoon()?'<span style="color:#e8543f">•</span>':''}</a>
+      <a class="tabbtn" href="/?v=today"><b><svg viewBox='0 0 24 24' width='21' height='21' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='7.6' r='4'/><path d='M3.8 20.2c1.6-4 4.6-6 8.2-6s6.6 2 8.2 6'/></svg></b>我</a>
     </div></div>`;
 }
 function goTab(v){
