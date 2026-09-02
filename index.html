@@ -347,7 +347,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-03n';
+const BUILD='2026-09-03o';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -781,7 +781,7 @@ function pickCards(n, exclude){
   hotSeen=0; hotIdx=0;
   const src=feedSrc().filter(c=>!exclude.has(c.key));
   if(feedSort==='fol'){
-    const line=src.filter(c=>c.kind==='post'&&c.post&&!c.post.auto)
+    const line=src.filter(c=>c.kind==='post'&&c.post&&!c.auto)
                   .sort((a,b)=>new Date(b.at||0)-new Date(a.at||0)).slice(0,n);
     let run=0;
     return line.map((c,i)=>{
@@ -804,7 +804,7 @@ function pickCards(n, exclude){
   const okAuthor=c=>!out.slice(-3).some(o=>au(o)===au(c));            // 作者：近三条不重复
   const okTopic =c=>!out.slice(-6).some(o=>topicOf(o)===topicOf(c));  // 概念：近六条不重复
   const okArea  =c=>areaOf(c)==='kb' ||     // 知识库卡有自己的配额，不占学科名额
-                    (!(out.length>=3 && out.slice(-3).every(o=>areaOf(o)===areaOf(c)))
+                    (!(out.length>=1 && areaOf(out[out.length-1])===areaOf(c))
                      && out.filter(o=>areaOf(o)===areaOf(c)).length < Math.max(3,Math.ceil(n*0.34)));
   const freshest=arr=>arr.slice().sort((a,b)=>((richSeen[richKind(a.c)]??-99)-(richSeen[richKind(b.c)]??-99)))[0];
   while(out.length<n){
