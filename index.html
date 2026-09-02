@@ -87,10 +87,14 @@ html[data-theme=dark] .wbav{background:linear-gradient(135deg,#4a3f7a,#6b5aa8);c
 .wbtext p{margin:.3em 0}
 .wbtext .tt{font-weight:600}
 .wbtopic{color:var(--wb-blue)}
-.wbfig{margin:8px -14px 4px;padding:26px 16px;text-align:center;font-size:17px;
-  background:linear-gradient(135deg,#2b2540,#463a6b);color:#f2eeff;line-height:1.9}
-.wbfig .cap{display:block;margin-top:10px;font-size:12px;color:#b9b0e0}
-.wbfig .katex{color:#f2eeff}
+.wbfig{margin:10px 0;padding:20px 18px 16px;border-radius:8px;text-align:left;font-size:17px;
+  background:#232b39;color:#eef2f8;line-height:1.9;overflow-x:auto}
+.wbfig .cap{display:block;margin-top:12px;font-size:12px;color:#c3cede}
+.wbfig .katex{color:#eef2f8}
+/* KaTeX 的块级公式自带 text-align:center,不覆盖的话外面写 left 是白写(第5轮审查 D) */
+.wbfig .katex-display{text-align:left;margin:0}
+.wbfig .katex-display>.katex{text-align:left}
+.wbfig p{margin:0}
 .wbquote{background:var(--wb-bg);border-radius:4px;padding:8px 10px;margin:6px 0;font-size:13.5px;
     color:var(--wb-txt)}
 .wbacts{display:flex;border-top:1px solid var(--wb-line);margin-top:8px}
@@ -133,7 +137,7 @@ html[data-theme=dark] .wbchip{background:#3a2c1c;color:#ffb066}
 .wbbar .tabs span.on::after{content:'';position:absolute;left:50%;transform:translateX(-50%);bottom:1px;width:20px;height:3px;border-radius:2px;background:#ff5a5f}
 .wbbar .ic{font-size:17px;color:var(--wb-txt);cursor:pointer;background:none;border:0}
 .wbtabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--wb-card);
-  border-top:1px solid var(--wb-line);display:flex;padding:6px 0 8px}
+  border-top:1px solid var(--wb-line);box-shadow:0 -6px 12px -8px rgba(0,0,0,.28);display:flex;padding:6px 0 8px}
 .wbtabbar button{flex:1;border:0;background:none;color:var(--wb-meta);font-size:11px;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;gap:2px}
 .wbtabbar button b{display:flex;align-items:center;justify-content:center;height:21px}
@@ -286,7 +290,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-02j';
+const BUILD='2026-09-02k';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -657,22 +661,41 @@ function feedWeight(c){
   if(c.hot) w*=1.5;                    // 词源八卦/翻车预警/老师强调的点 = 变比率里的"中奖"
   return w*(0.7+Math.random()*0.9);
 }
-function nextBatch(n){
-  const src=(typeof feedGroup!=='undefined'&&feedGroup!=='all')?FEED.filter(c=>c.kind===feedGroup):FEED;
+/* 一张卡"有花样"= 带公式卡/投票/评论区/转发引用。全是素卡时整屏一个模子(第5轮审查 B)。 */
+function isRich(c){
+  const x=c.post; if(!x)return false;
+  return !!(x.figure || x.poll || (x.seed_comments&&x.seed_comments.length) || c.quoted);
+}
+function feedSrc(){
+  return (typeof feedGroup!=='undefined'&&feedGroup!=='all')?FEED.filter(c=>c.kind===feedGroup):FEED;
+}
+/* 关注流:只看写好的 OC 账号,严格按时间倒序 —— 真产品的关注流不会乱序(第5轮审查 A)。
+   推荐流才是权重排序,那是"推荐"这个词本来的意思。 */
+function pickCards(n, exclude){
+  const src=feedSrc().filter(c=>!exclude.has(c.key));
+  if(feedSort==='fol'){
+    return src.filter(c=>c.kind==='post'&&c.post&&!c.post.auto)
+              .sort((a,b)=>new Date(b.at||0)-new Date(a.at||0)).slice(0,n);
+  }
   const pool=src.map(c=>({c,w:feedWeight(c)})).sort((a,b)=>b.w-a.w);
   // 纯按权重取会出现同一个人设连发五条(第4轮审查:整屏都是「可测但不想营业」)。
   // 取的时候跳过最近两条已用过的作者,实在没别人可用再放行。
-  const out=[]; const used=new Set(); const rest=[];
+  const out=[]; const used=new Set(); const rest=[]; let plain=0;
   const au=c=>c.post?c.post.author:(c.per&&c.per.n)||'';
-  for(const p of pool){
-    if(out.length>=n)break;
-    if(used.has(p.c.key))continue;
-    if(out.slice(-2).some(o=>au(o)===au(p.c))){ rest.push(p); continue; }
-    used.add(p.c.key); out.push(p.c);
+  for(let pass=0; pass<2 && out.length<n; pass++){
+    for(const p of (pass?rest:pool)){
+      if(out.length>=n)break;
+      if(used.has(p.c.key))continue;
+      if(!pass){
+        if(out.slice(-2).some(o=>au(o)===au(p.c))){ rest.push(p); continue; }
+        if(plain>=2 && !isRich(p.c)){ rest.push(p); continue; }   // 连两张素卡后优先给有花样的
+      }
+      used.add(p.c.key); out.push(p.c); plain=isRich(p.c)?0:plain+1;
+    }
   }
-  for(const p of rest){ if(out.length>=n)break; if(used.has(p.c.key))continue; used.add(p.c.key); out.push(p.c); }
   return out;
 }
+function nextBatch(n){ return pickCards(n, new Set()); }
 function feedAgo(at){
   if(!at)return'';
   const d=(Date.now()-new Date(at).getTime())/6e4;
@@ -683,13 +706,26 @@ function feedAgo(at){
 }
 /* 转发/评论/赞的计数:由帖子 id 稳定生成。这是仿真的一部分(和人设的粉丝数同性质),
    不是任何真实数据 —— 但没有它 feed 会显得"里面没有人"。 */
+/* 三个数要有真实的比例和量级差:赞 ≈ 10× 转发,评论 ≈ 2-3× 转发,冷门帖就该只有几个赞。
+   原来三个数挤在同一个窄区间、还都是三位数,一眼假(第5轮审查 E)。salt 1=转发 2=评论 3=赞。 */
 function fakeN(id,salt){
-  let h=salt; for(let i=0;i<id.length;i++) h=(h*33+id.charCodeAt(i))|0;
-  h=Math.abs(h)%997;
-  // 上限压在三位数:这是她一个人的流,出现"10万赞"立刻破功(第4轮审查)
-  return h<4?'':(h<600?Math.max(1,h%420):Math.max(2,Math.floor(h/9)));
+  let h=0; for(let i=0;i<id.length;i++) h=(h*33+id.charCodeAt(i))|0;
+  h=Math.abs(h);
+  const base=[1,2,3,5,8,13,21,34][h%8]+(h>>3)%5;
+  const n=salt===1?base:salt===2?Math.round(base*(2+(h>>7)%2)):Math.round(base*(8+(h>>11)%9));
+  return n<3?'':String(n);
 }
+const AVBASE='https://kbcftsexzmxjtlljgcyi.supabase.co/storage/v1/object/public/coursenotes/oc/';
+function figTex(t){ t=(t||'').trim(); return /\$/.test(t)?t:('$$'+t+'$$'); }
 function wbAvatar(pk,size){
+  const q=per(pk); const s=size||44;
+  // 有画好的头像就用图,没有(或加载失败)退回单字色块 —— 换头像不用改代码,传张图就行
+  if(q.img) return `<img class="wbav" src="${AVBASE}${q.img}" alt=""
+     style="width:${s}px;height:${s}px;object-fit:cover;background:${q.c}"
+     onerror="this.outerHTML=wbAvatarText('${pk}',${s})">`;
+  return wbAvatarText(pk,s);
+}
+function wbAvatarText(pk,size){
   const q=per(pk); const s=size||44;
   return `<div class="wbav" style="width:${s}px;height:${s}px;color:#fff;border:0;
      background:radial-gradient(circle at 30% 25%, ${q.c}dd, ${q.c} 45%, ${q.c}99);
@@ -740,7 +776,7 @@ function ocard(c){
         <div class="wbfrom">${feedAgo(x.posted_at)} · 来自 <b>${esc(q.dev)}</b>${x.hot?'<span class="wbchip">热</span>':''}</div>
       </div></div>
     <div class="wbtext">${md(x.body_md).replace(/<\/p>\s*$/,(x.full_md?'':'</p>'))}${full}${x.full_md?'</p>':''}</div>
-    ${x.figure?`<div class="wbfig">${md(x.figure.tex||'')}<span class="cap">${esc(x.figure.cap||'')}</span></div>`:''}
+    ${x.figure?`<div class="wbfig">${md(figTex(x.figure.tex))}<span class="cap">${esc(x.figure.cap||'')}</span></div>`:''}
     ${c.due?`<div class="wbfrom" style="margin-top:2px">${dueLabel(c.due)}</div>`:''}
     ${rep}${wbPoll(x.id,x.poll)}
     ${wbComments(x.seed_comments)}
@@ -780,7 +816,8 @@ function wbHot(){
 }
 const WBGROUPS=[['all','全部'],['kp','知识点'],['lec','课程'],['term','术语'],['en','英语'],
                 ['read','论文/书'],['qa','我问过'],['hw','作业']];
-let feedGroup='all';
+let feedGroup='all', feedSort='rec';
+function setSort(x){ if(feedSort===x){ reshuffle(); return; } feedSort=x; render(); window.scrollTo({top:0}); }
 function setGroup(g){ feedGroup=g; render(); window.scrollTo({top:0}); }
 function groupCount(g){ return g==='all'?FEED.length:FEED.filter(c=>c.kind===g||(g==='kp'&&c.kind==='kp')).length; }
 function rFeed(){
@@ -797,8 +834,10 @@ function rFeed(){
   return `<div class="wb">
     <div class="wbbar">
       <div class="me">我</div>
-      <div class="tabs"><span class="on">关注</span><span onclick="reshuffle()">推荐</span></div>
-      <button class="ic" onclick="reshuffle()" title="换一批">⌕</button>
+      <div class="tabs"><span class="${feedSort==='fol'?'on':''}" onclick="setSort('fol')">关注</span>
+        <span class="${feedSort==='rec'?'on':''}" onclick="setSort('rec')">推荐</span></div>
+      <button class="ic" onclick="reshuffle()" title="换一批"><svg viewBox="0 0 24 24" width="19" height="19"
+        fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></button>
     </div>
     <div class="wbgrid">
       <div class="wbside"><div class="wbbox wbnav"><h4>首页</h4>${nav}</div></div>
@@ -874,16 +913,14 @@ function feedObserve(){
     if(!es[0].isIntersecting)return;
     const list=document.getElementById('feedlist'); if(!list)return;
     const shownKeys=new Set([...list.children].map(x=>x.dataset.k));
-    const src2=(feedGroup!=='all')?FEED.filter(c=>c.kind===feedGroup):FEED;
-    const more2=src2.map(c=>({c,w:feedWeight(c)})).filter(p=>!shownKeys.has(p.c.key))
-                    .sort((a,b)=>b.w-a.w).slice(0,feedBatch).map(p=>p.c);
+    const more2=pickCards(feedBatch, shownKeys);
     if(!more2.length){ document.getElementById('feedmore').textContent='今天的池子见底了 —— 去别的页看看,或者明天再来'; feedIO.disconnect(); return; }
     list.insertAdjacentHTML('beforeend',more2.map(fcard).join(''));
     mathify(list);
     markSeen(more2);
   },{rootMargin:'400px'});
   feedIO.observe(more);
-  markSeen([...document.querySelectorAll('#feedlist .fcard')].map(x=>({key:x.dataset.k,kind:'?'})));
+  markSeen([...document.querySelectorAll('#feedlist .wbpost')].map(x=>({key:x.dataset.k,kind:'card'})));
 }
 let seenQueue=[], seenTimer=null;
 async function flushSeen(){
