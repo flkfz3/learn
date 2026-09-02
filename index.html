@@ -342,7 +342,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-03k';
+const BUILD='2026-09-03l';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -756,7 +756,7 @@ const AREA={};
 'projection gauss-markov anova quadratic-forms design-matrix blue generalized-inverse mixed-model multiple-comparison'.split(' ').forEach(t=>AREA[t]='lm');
 'computing gamma-sim julia-perf julia-types simulation inverse-discrete accept-efficiency box-muller variance-reduction prng mc-error importance-ess gibbs bootstrap'.split(' ').forEach(t=>AREA[t]='comp');
 'english study history'.split(' ').forEach(t=>AREA[t]='misc');
-function areaOf(c){ return AREA[(c.post&&c.post.topic)||c.kind] || 'misc'; }
+function areaOf(c){ return c.auto ? 'kb' : (AREA[(c.post&&c.post.topic)||c.kind] || 'misc'); }
 function topicOf(c){ return (c.post&&c.post.topic)||c.slug||c.kind; }
 function richKind(c){
   const x=c.post; if(!x)return '';
@@ -791,8 +791,9 @@ function pickCards(n, exclude){
   const richSeen={};                        // 每种花样上次出现在第几位，越久没露面越优先
   const okAuthor=c=>!out.slice(-3).some(o=>au(o)===au(c));            // 作者：近三条不重复
   const okTopic =c=>!out.slice(-6).some(o=>topicOf(o)===topicOf(c));  // 概念：近六条不重复
-  const okArea  =c=>!(out.length>=3 && out.slice(-3).every(o=>areaOf(o)===areaOf(c)))
-                    && out.filter(o=>areaOf(o)===areaOf(c)).length < Math.max(3,Math.ceil(n*0.42));
+  const okArea  =c=>areaOf(c)==='kb' ||     // 知识库卡有自己的配额，不占学科名额
+                    (!(out.length>=3 && out.slice(-3).every(o=>areaOf(o)===areaOf(c)))
+                     && out.filter(o=>areaOf(o)===areaOf(c)).length < Math.max(3,Math.ceil(n*0.34)));
   const freshest=arr=>arr.slice().sort((a,b)=>((richSeen[richKind(a.c)]??-99)-(richSeen[richKind(b.c)]??-99)))[0];
   while(out.length<n){
     const cand=pool.filter(p=>!used.has(p.c.key));
