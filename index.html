@@ -86,7 +86,8 @@ html[data-theme=dark] .wbav{background:linear-gradient(135deg,#4a3f7a,#6b5aa8);c
      text-wrap:pretty 专治末行只剩两个字的孤行(第8轮审查 P1)。 */
 .wbcmt,.wbrep{text-wrap:pretty;line-break:strict}   /* 不加 strict,行内公式后面那个逗号会被甩到行首 */
 .wbcmt .katex,.wbrep .katex{white-space:nowrap;font-size:.95em}   /* 公式不许被行尾劈开(第15轮审查) */
-.nb{white-space:nowrap}   /* 带连字符/拉丁字母的术语不许劈开:σ-域 断成「σ-」+「域。」最难看 */
+.nb{white-space:nowrap}
+.wbtext strong,.wbcmt strong{white-space:nowrap}   /* 加粗短语折行会改语义：「不要求不交」→「不要」/「求不交」 */   /* 带连字符/拉丁字母的术语不许劈开:σ-域 断成「σ-」+「域。」最难看 */
 /* feed 里的表格原来一条样式都没有(.md table 只管知识库页),裸 table 在按行数裁的
    -webkit-box 容器里表头和数据列会错开,看着像排版事故(确认轮抓到) */
 .wbtext table{display:block;width:100%;border-collapse:collapse;overflow-x:auto;margin:6px 0;font-size:13px}
@@ -341,7 +342,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-03g';
+const BUILD='2026-09-03h';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -639,7 +640,7 @@ function headPlus(head,text){
   const norm=x=>(x||'').replace(/[\s*·。,，:：]/g,'');
   const h=norm(head), t=norm(text);
   if(h && (t.startsWith(h.slice(0,20)) || h.startsWith(t.slice(0,20)))) return text;
-  return '**'+head+'** '+text;
+  return '**'+head+'**\n\n'+text;
 }
 function buildFeed(){
   buildFeedSeen();
@@ -742,6 +743,16 @@ function feedWeight(c){
   return w*(0.7+Math.random()*0.9);
 }
 /* 一张卡"有花样"= 带公式卡/投票/评论区/转发引用。全是素卡时整屏一个模子(第5轮审查 B)。*/
+/* 把主题归到几个大学科,保证一个窗口里不会四屏全是概率论(审查:统计计算/推断/线性模型
+   在推荐流四屏里一次都没出现,全挤在关注流) */
+const AREA={};
+'prob-space countable measurable limsup borel generation axioms sigma-field lebesgue continuity monotone-class uniqueness borel-cantelli convergence lln clt product-measure stochastic-process random-variable cdf independence conditional expectation integral-3steps mct-dct jensen markov-cheby independence-product change-of-variable char-func martingale cond-exp slutsky'.split(' ').forEach(t=>AREA[t]='prob');
+'exp-family sufficiency cramer-rao mle-asym np-ump lrt-ci ancillary minimal-sufficient bayes admissible mom-consistency test-quantities size-of-test type-i-ii-error rejection-region p-value ump-test ump-np-mlr risk-function-basics loss-function umvue score-function fisher-information regularity-conditions delta-method confidence-interval qe-prep'.split(' ').forEach(t=>AREA[t]='infer');
+'projection gauss-markov anova quadratic-forms design-matrix blue generalized-inverse mixed-model multiple-comparison'.split(' ').forEach(t=>AREA[t]='lm');
+'computing gamma-sim julia-perf julia-types simulation inverse-discrete accept-efficiency box-muller variance-reduction prng mc-error importance-ess gibbs bootstrap'.split(' ').forEach(t=>AREA[t]='comp');
+'english study history'.split(' ').forEach(t=>AREA[t]='misc');
+function areaOf(c){ return AREA[(c.post&&c.post.topic)||c.kind] || 'misc'; }
+function topicOf(c){ return (c.post&&c.post.topic)||c.slug||c.kind; }
 function richKind(c){
   const x=c.post; if(!x)return '';
   if(x.figure)return 'fig';
@@ -771,20 +782,26 @@ function pickCards(n, exclude){
      约束满足不了才降级，而不是先塞满再补 —— 原来的两遍写法在池子后段必然退化成全素卡。*/
   const out=[]; const used=new Set();
   const au=c=>c.post?c.post.author:(c.per&&c.per.n)||'';
-  let plain=1, lastRich='';                 // 从 1 起步：第二张就该有花样，首屏是第一印象
-  const okAuthor=c=>!out.slice(-2).some(o=>au(o)===au(c));
+  let plain=1;                              // 从 1 起步：第二张就该有花样，首屏是第一印象
+  const richSeen={};                        // 每种花样上次出现在第几位，越久没露面越优先
+  const okAuthor=c=>!out.slice(-3).some(o=>au(o)===au(c));            // 作者：近三条不重复
+  const okTopic =c=>!out.slice(-6).some(o=>topicOf(o)===topicOf(c));  // 概念：近六条不重复
+  const okArea  =c=>!(out.length>=3 && out.slice(-3).every(o=>areaOf(o)===areaOf(c)));
+  const freshest=arr=>arr.slice().sort((a,b)=>((richSeen[richKind(a.c)]??-99)-(richSeen[richKind(b.c)]??-99)))[0];
   while(out.length<n){
     const cand=pool.filter(p=>!used.has(p.c.key));
     if(!cand.length)break;
+    const full=cand.filter(p=>okAuthor(p.c)&&okTopic(p.c)&&okArea(p.c));
+    const rich=full.filter(p=>richKind(p.c));
     const pick =
-      (plain>=2 && cand.find(p=>okAuthor(p.c) && richKind(p.c) && richKind(p.c)!==lastRich)) ||
-      (plain>=2 && cand.find(p=>okAuthor(p.c) && richKind(p.c))) ||
-      cand.find(p=>okAuthor(p.c) && richKind(p.c)!==lastRich) ||
+      (plain>=2 && rich.length ? freshest(rich) : null) ||   // 该上花样了：挑最久没露面的那种
+      full[0] ||
+      cand.find(p=>okAuthor(p.c)&&okTopic(p.c)) ||
       cand.find(p=>okAuthor(p.c)) ||
       cand[0];
     const rk=richKind(pick.c);
     used.add(pick.c.key); out.push(pick.c);
-    plain=rk?0:plain+1; if(rk)lastRich=rk;
+    plain=rk?0:plain+1; if(rk)richSeen[rk]=out.length;
   }
   return out;
 }
