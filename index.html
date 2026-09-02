@@ -128,9 +128,9 @@ html[data-theme=dark] .wbchip{background:#3a2c1c;color:#ffb066}
   display:flex;align-items:center;justify-content:center;font-size:13px;color:#7a4a12;font-weight:700}
 .wbbar .tabs{flex:1;display:flex;gap:16px;overflow-x:auto;scrollbar-width:none}
 .wbbar .tabs::-webkit-scrollbar{display:none}
-.wbbar .tabs span{font-size:16px;color:var(--wb-meta);cursor:pointer;padding-bottom:3px}
+.wbbar .tabs span{font-size:16px;color:var(--wb-meta);cursor:pointer;padding:0 2px 7px}
 .wbbar .tabs span.on{color:var(--wb-txt);font-weight:700;position:relative}
-.wbbar .tabs span.on::after{content:'';position:absolute;left:50%;transform:translateX(-50%);bottom:-4px;width:18px;height:2.5px;border-radius:2px;background:#ff5a5f}
+.wbbar .tabs span.on::after{content:'';position:absolute;left:50%;transform:translateX(-50%);bottom:1px;width:20px;height:3px;border-radius:2px;background:#ff5a5f}
 .wbbar .ic{font-size:17px;color:var(--wb-txt);cursor:pointer;background:none;border:0}
 .wbtabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--wb-card);
   border-top:1px solid var(--wb-line);display:flex;padding:6px 0 8px}
@@ -143,7 +143,7 @@ html[data-theme=dark] .wbchip{background:#3a2c1c;color:#ffb066}
 @media(min-width:1001px){ .wbtabbar{display:none} .wbbar{margin-bottom:12px} }
 @media(max-width:1000px){ .wb{padding-bottom:96px} }   /* 底部 tab bar 会压住最后一行 */
 /* 微博手机版的动作条是四个图标,不是三个文字按钮 */
-.wbicons{display:flex;border-top:1px solid var(--wb-line);margin-top:8px}
+.wbicons{display:flex;border-top:1px solid var(--wb-line);margin-top:8px}  /* 线与卡同宽 */
 .wbicons button{flex:1;border:0;background:none;color:var(--wb-meta);font-size:13px;padding:10px 0;
   cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
 .wbicons button:hover{color:var(--wb-org)}
@@ -284,7 +284,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-02g';
+const BUILD='2026-09-02h';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -534,9 +534,22 @@ function postCards(){
     hot:!!x.hot, slug:x.kp_slug, quoted: x.quote_of? byId[x.quote_of] : null,
   }));
 }
+/* 把知识库自动拼出来的卡,包装成和写好的 OC 帖同一种结构 —— 否则同一个 feed 里
+   会出现两套按钮文案、两套展开控件、两套数学渲染(视觉审查 P0-A 抓到的)。 */
+const AUTO_PER={term:'borel',kp:'meas',lec:'p_num',en:'night',read:'paper',qa:'ask',note:'ask'};
+function autoPost(o){
+  const author = (o.kind==='lec' && /8060/.test(o.from||'')) ? 'comp' : (AUTO_PER[o.kind]||'p_num');
+  return {key:o.key, kind:'post', level:o.level||1, per:per(author), at:o.at, hot:!!o.hot,
+    slug:o.slug, lecId:o.lecId, auto:true,
+    post:{id:o.key.replace(/[^a-zA-Z0-9]/g,'').slice(0,24), author, posted_at:o.at, hot:!!o.hot,
+      body_md:(o.head?('**'+o.head+'** '):'')+(o.text||''),
+      full_md:(o.full && o.full.length>(o.text||'').length+8)?o.full:null,
+      seed_comments:[], poll:null, figure:null,
+      topic:o.kind, kp_slug:o.slug||null, quote:o.quote||''}};
+}
 function buildFeed(){
   buildFeedSeen();
-  const C=postCards(); const push=o=>C.push(o);
+  const C=postCards(); const raw=[]; const push=o=>raw.push(o);
 
   /* ---- 一句话帖:每个知识点的定调句,读完 2 秒 ---- */
   D.kp.filter(k=>k.kind!=='term').forEach(k=>{
@@ -612,13 +625,14 @@ function buildFeed(){
   (D.hw||[]).filter(h=>h.due_at && new Date(h.due_at)>new Date()).forEach(h=>push({
     key:'hw:'+h.id, kind:'post', level:1, per:per('proof'), at:h.created_at, pin:true,
     post:{id:'hw-'+h.id, author:'proof', posted_at:h.created_at, hot:false,
-          body_md:'**'+(COURSES[h.course_code]||h.course_code)+' '+(h.title||'')+'**　'+(h.exercises||''),
+          body_md:'**'+(COURSES[h.course_code]||h.course_code)+' '+(h.title||'')+'** '+(h.exercises||''),
           full_md:h.solution_note||null, seed_comments:[], poll:null,
           topic:'homework', kp_slug:null},
     due:h.due_at}));
 
-  // 写好的 OC 帖走 c.post,没有 c.text —— 少了第一个条件会被这行整批丢掉(实测 43 条全没了)
-  FEED=C.filter(c=>c.kind==='post'||(c.text&&c.text.length>1)||c.quiz||c.due);
+  raw.filter(o=>o.kind==='post'||(o.text&&o.text.length>1)||o.quiz||o.due)
+     .forEach(o=>C.push(o.kind==='post'?o:autoPost(o)));
+  FEED=C;
   feedShown=0;
 }
 /* 权重:基础优先 + 看过衰减 + 久未见回升 + 抖动 */
@@ -705,7 +719,7 @@ function ocard(c){
         <div class="wbname">${esc(q.n)}${q.v?'<span class="wbbadge">V</span>':''}</div>
         <div class="wbfrom">${feedAgo(x.posted_at)} · 来自 <b>${esc(q.dev)}</b>${x.hot?'<span class="wbchip">热</span>':''}</div>
       </div></div>
-    <div class="wbtext">${md(x.body_md)}${full}</div>
+    <div class="wbtext">${md(x.body_md).replace(/<\/p>\s*$/,(x.full_md?'':'</p>'))}${full}${x.full_md?'</p>':''}</div>
     ${x.figure?`<div class="wbfig">${md(x.figure.tex||'')}<span class="cap">${esc(x.figure.cap||'')}</span></div>`:''}
     ${c.due?`<div class="wbfrom" style="margin-top:2px">${dueLabel(c.due)}</div>`:''}
     ${rep}${wbPoll(x.id,x.poll)}
@@ -727,47 +741,8 @@ function rephrase(slug,topic,key){
   el.insertAdjacentHTML('afterend',ocard(c)); mathify(el.nextElementSibling);
   markSeen([{key:c.key,kind:'post'}]);
 }
-function fcard(c){
-  if(c.kind==='post') return ocard(c);
-  const r=feKey(c.key), per=c.per||{n:'学习',a:'学',v:0};
-  const chip = c.hot?'<span class="wbchip">🔥</span>':(c.level===1?'<span class="wbchip">基础</span>':c.level===3?'<span class="wbchip">推导</span>':'');
-  let links='';
-  if(c.bookPath)links+=`<span class="wblink" onclick="openBook('${esc(c.bookPath)}',${(+c.bookPage)||1})">翻到原文</span>`;
-  if(c.link)    links+=`<a class="wblink" target="_blank" href="${esc(c.link)}">打开原文</a>`;
-  if(c.slug)    links+=`<span class="wblink" onclick="openKPslug('${esc(c.slug)}')">进主页</span>`;
-  if(c.lecId)   links+=`<span class="wblink" onclick="openLecture('${esc(c.lecId)}')">整节讲义</span>`;
+function fcard(c){ return ocard(c); }
 
-  // 正文 = 钩子一行 + 一句话;长内容折进「全文」,不把阅读任务塞进流里
-  let body=`<div class="wbtext">`;
-  if(c.head) body+=`<span class="tt">${esc(c.head)}</span>${c.text?' ':''}`;
-  if(c.text) body+=md(c.text).replace(/^<p>|<\/p>$/g,'');
-  body+=`</div>`;
-  const longer = c.full && c.full.replace(/\s/g,'').length > (c.text||'').replace(/\s/g,'').length+8;
-  if(c.quiz){
-    body+=`<details class="wbquiz" onclick="event.stopPropagation()"><summary>${c.kind==='qa'?'当时是怎么答的':'先自己想,再点开'}</summary>
-           <div style="margin-top:6px">${md(c.full||'')}</div></details>`;
-  }else if(longer){
-    body+=`<details class="wbquiz"><summary>全文</summary><div style="margin-top:6px">${md(c.full)}</div></details>`;
-  }
-  return `<div class="wbpost" data-k="${esc(c.key)}">
-    <span class="wbmore" onclick="feedNope('${esc(c.key)}','${c.kind}')" title="不想看这条">⌄</span>
-    <div class="wbtop">
-      <div class="wbav">${esc(per.a)}</div>
-      <div style="flex:1;min-width:0">
-        <div class="wbname">${esc(per.n)}${per.v?'<span class="wbbadge">V</span>':''}</div>
-        <div class="wbfrom">${feedAgo(c.at)} · 来自 <b>${esc(c.from||'')}</b>${chip}</div>
-      </div></div>
-    ${body}
-    ${c.quote?`<div class="wbquote">${esc(c.quote)}</div>`:''}
-    ${c.due?`<div class="wbfrom" style="margin-top:4px">${dueLabel(c.due)}</div>`:''}
-    ${links?`<div style="margin:6px 0 2px">${links}</div>`:''}
-    <div class="wbicons">
-      <button class="${r.liked?'on':''}" onclick="feedAct(this,'${esc(c.key)}','${c.kind}','like')">👍 <span class="n">会了</span></button>
-      <button onclick="feedAsk('${esc(c.key)}','${esc((c.head||per.n).replace(/'/g,''))}')">💬 <span class="n">提问</span></button>
-      <button class="${r.later?'on':''}" onclick="feedAct(this,'${esc(c.key)}','${c.kind}','later')">🔖 <span class="n">收藏</span></button>
-      <button onclick="feedNope('${esc(c.key)}','${c.kind}')">🙈 <span class="n">划走</span></button>
-    </div></div>`;
-}
 /* 热搜榜:最近被提到/更新得最多的主题,纯粹为了好玩,但排序是真的 */
 function wbHot(){
   const cnt={};
@@ -829,7 +804,7 @@ function rFeed(){
       <button onclick="goTab('kb')"><b><svg viewBox='0 0 24 24' width='21' height='21' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M15 9l-2.2 5.8L7 17l2.2-5.8z'/></svg></b>发现</button>
       <button onclick="wbCompose()"><span class="plus">＋</span></button>
       <button onclick="goTab('hw')"><b><svg viewBox='0 0 24 24' width='21' height='21' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='5' width='18' height='14' rx='2'/><path d='M3.5 6.5L12 13l8.5-6.5'/></svg></b>消息${dueSoon()?'<span style="color:#e8543f">•</span>':''}</button>
-      <button onclick="goTab('today')"><b><svg viewBox='0 0 24 24' width='21' height='21' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='8' r='3.6'/><path d='M4.5 20c1.4-3.6 4.2-5.4 7.5-5.4s6.1 1.8 7.5 5.4'/></svg></b>我</button>
+      <button onclick="goTab('today')"><b><svg viewBox='0 0 24 24' width='21' height='21' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='7.6' r='4'/><path d='M3.8 20.2c1.6-4 4.6-6 8.2-6s6.6 2 8.2 6'/></svg></b>我</button>
     </div></div>`;
 }
 function goTab(v){
