@@ -384,7 +384,7 @@ details.kps summary{cursor:pointer;font-size:13px;color:var(--accent)}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
-const BUILD='2026-09-04i';
+const BUILD='2026-09-04j';
 const SUPA_URL='https://kbcftsexzmxjtlljgcyi.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiY2Z0c2V4em14anRsbGpnY3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTAwMzMsImV4cCI6MjA5NDYyNjAzM30.YGKOjmNzNPI-d4A6nDtFdYsExRqvERoY_7IctbMIN1A';
 const TZ='America/New_York';
@@ -1665,7 +1665,10 @@ function openOv(html){
   document.getElementById('sheet').innerHTML=html+
     `<div style="text-align:right;margin-top:14px"><button class="btn ghost" onclick="closeOv()">关闭</button></div>`;
   document.getElementById('ov').classList.add('on');
-  mathify(document.getElementById('sheet'));
+  const sh=document.getElementById('sheet');
+  mathify(sh);
+  hintScroll(sh);   // 条目浮层以前漏了这个:60 条全文条目里 35 条有横向溢出的公式,
+                    // 却没有渐隐提示,她看不出来还能往右滑(2026-09-03 kprender.js 探出来的)
 }
 function closeOv(){document.getElementById('ov').classList.remove('on');}
 let addType='study';
